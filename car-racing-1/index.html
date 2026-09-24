@@ -1,0 +1,4130 @@
+<!-- File: index.html -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RALLY / RAW 2 — 拉力動力學實驗場</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #10191d;
+            --panel: rgba(12, 22, 27, 0.9);
+            --line: rgba(211, 234, 239, 0.16);
+            --text: #edf4ef;
+            --muted: #91a7ae;
+            --orange: #ff7545;
+            --green: #a6f4cf;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            color: var(--text);
+            background: var(--bg);
+            font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        }
+
+        button,
+        select,
+        input {
+            font: inherit;
+        }
+
+        button {
+            padding: 10px 15px;
+            color: var(--text);
+            background: #22333c;
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #354b55;
+        }
+
+        button:disabled {
+            opacity: 0.45;
+            cursor: wait;
+        }
+
+        button.primary {
+            color: #172125;
+            background: var(--orange);
+            border-color: var(--orange);
+            font-weight: 800;
+        }
+
+        #world {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #hud {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .panel {
+            padding: 15px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--panel);
+            backdrop-filter: blur(12px);
+        }
+
+        .top {
+            position: absolute;
+            top: 20px;
+            left: 24px;
+            right: 24px;
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .brand {
+            font-size: 30px;
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -1.5px;
+        }
+
+        .brand b {
+            color: var(--orange);
+        }
+
+        .micro {
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 1px;
+            line-height: 1.8;
+        }
+
+        .stats {
+            display: flex;
+            gap: 26px;
+        }
+
+        .stat small {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .stat strong {
+            font-size: 17px;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #left {
+            position: absolute;
+            left: 24px;
+            top: 110px;
+            width: 220px;
+        }
+
+        #map {
+            display: block;
+            width: 188px;
+            height: 180px;
+        }
+
+        .title {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .green {
+            color: var(--green);
+        }
+
+        .orange {
+            color: var(--orange);
+        }
+
+        #telemetry {
+            position: absolute;
+            top: 110px;
+            right: 24px;
+            width: 292px;
+        }
+
+        .g-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 10px;
+        }
+
+        #g {
+            width: 112px;
+            height: 112px;
+        }
+
+        .mono {
+            font-family: Consolas, monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #beta {
+            font-size: 31px;
+        }
+
+        .wheels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 15px 0;
+        }
+
+        .wheel-head,
+        .row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 11px;
+        }
+
+        .row {
+            padding: 5px 0;
+        }
+
+        .bar {
+            height: 5px;
+            margin: 6px 0;
+            border-radius: 3px;
+            overflow: hidden;
+            background: #35434a;
+        }
+
+        .bar i {
+            display: block;
+            width: 0;
+            height: 100%;
+            background: var(--green);
+        }
+
+        .wheel-data {
+            color: var(--muted);
+            font: 10px Consolas, monospace;
+            line-height: 1.7;
+        }
+
+        #trace {
+            display: block;
+            width: 260px;
+            height: 68px;
+            margin-top: 10px;
+        }
+
+        #dash {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            width: 365px;
+            transform: translateX(-50%);
+            border-top: 2px solid var(--orange);
+        }
+
+        #lights {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 11px;
+        }
+
+        #lights i {
+            flex: 1;
+            height: 5px;
+            background: #34454c;
+            border-radius: 2px;
+        }
+
+        .dash-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #speed {
+            font-size: 65px;
+            line-height: 1;
+            letter-spacing: -4px;
+        }
+
+        #gear {
+            padding-left: 18px;
+            border-left: 1px solid var(--line);
+            color: var(--orange);
+            font-size: 58px;
+            line-height: 1;
+        }
+
+        #rpm {
+            font-size: 20px;
+        }
+
+        .pedals {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        #steerTrack {
+            position: relative;
+            height: 7px;
+            margin: 13px 0 5px;
+            background: #33454c;
+            border-radius: 5px;
+        }
+
+        #steerTrack::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: -3px;
+            width: 1px;
+            height: 13px;
+            background: #d2e0de;
+        }
+
+        #steerDot {
+            position: absolute;
+            top: -2px;
+            left: 50%;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: var(--orange);
+            transform: translateX(-50%);
+        }
+
+        .steer-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .controls {
+            position: absolute;
+            left: 24px;
+            bottom: 25px;
+            color: #c5d3d4;
+            font-size: 11px;
+            line-height: 2.05;
+        }
+
+        kbd {
+            display: inline-block;
+            min-width: 20px;
+            padding: 1px 4px;
+            margin-right: 3px;
+            border: 1px solid #53656b;
+            border-radius: 3px;
+            font: 10px Consolas, monospace;
+            text-align: center;
+        }
+
+        .actions {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            gap: 7px;
+            pointer-events: auto;
+        }
+
+        .actions button {
+            padding: 9px 11px;
+            font-size: 11px;
+        }
+
+        #toast {
+            position: absolute;
+            top: 112px;
+            left: 50%;
+            max-width: 430px;
+            padding: 12px 18px;
+            transform: translateX(-50%);
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            font-size: 12px;
+            line-height: 1.8;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        #pause {
+            display: none;
+            position: absolute;
+            top: 43%;
+            width: 100%;
+            font-size: 34px;
+            letter-spacing: 10px;
+            text-align: center;
+            text-shadow: 0 3px 20px black;
+        }
+
+        #pause small {
+            display: block;
+            margin-top: 12px;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 22px;
+            background: #071116b8;
+            backdrop-filter: blur(12px);
+        }
+
+        .modal {
+            width: min(790px, 100%);
+            max-height: 92vh;
+            padding: 34px;
+            overflow: auto;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: linear-gradient(145deg, #21313a, #101b22);
+            box-shadow: 0 30px 100px #0007;
+        }
+
+        h1 {
+            margin: 15px 0 10px;
+            font-size: clamp(40px, 7vw, 70px);
+            font-style: italic;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -3px;
+        }
+
+        h1 span {
+            color: var(--orange);
+        }
+
+        h2 {
+            margin: 0 0 16px;
+            font-size: 24px;
+        }
+
+        .lead {
+            color: #c9d7d7;
+            font-size: 16px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin: 25px 0;
+        }
+
+        .feature {
+            border-top: 1px solid var(--line);
+            padding-top: 13px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.9;
+        }
+
+        .feature strong {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .note {
+            color: #a7bcc2;
+            font-size: 12px;
+            line-height: 1.95;
+        }
+
+        .warning {
+            padding: 12px 15px;
+            border-left: 2px solid var(--orange);
+            background: #ffffff04;
+        }
+
+        .footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 24px;
+        }
+
+        #settings {
+            display: none;
+        }
+
+        .setting {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            align-items: center;
+            gap: 20px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--line);
+            font-size: 13px;
+        }
+
+        .setting small {
+            display: block;
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 10px;
+            line-height: 1.7;
+        }
+
+        select,
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            color: var(--text);
+            background: #15252d;
+            border: 1px solid #415862;
+            border-radius: 4px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--orange);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 1100px) {
+            #left {
+                width: 188px;
+            }
+
+            #map {
+                width: 156px;
+                height: 150px;
+            }
+
+            .controls {
+                font-size: 10px;
+            }
+
+            #telemetry {
+                width: 264px;
+            }
+
+            #trace {
+                width: 232px;
+            }
+
+            #dash {
+                width: 320px;
+            }
+
+            .stats {
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 800px) {
+            #left,
+            #telemetry,
+            .controls,
+            .optional {
+                display: none;
+            }
+
+            .top {
+                top: 14px;
+                left: 14px;
+                right: 14px;
+            }
+
+            .brand {
+                font-size: 24px;
+            }
+
+            .stats {
+                padding: 10px;
+            }
+
+            .stat strong {
+                font-size: 13px;
+            }
+
+            #dash {
+                bottom: 76px;
+            }
+
+            .actions {
+                right: 14px;
+                bottom: 16px;
+            }
+
+            .modal {
+                padding: 23px;
+            }
+
+            .features {
+                gap: 10px;
+            }
+
+            .setting {
+                grid-template-columns: 1fr;
+                gap: 9px;
+            }
+
+            #toast {
+                width: 80%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="world"></canvas>
+
+    <div id="hud">
+        <header class="top">
+            <div>
+                <div class="brand">RALLY <b>/ RAW 2</b></div>
+                <div class="micro">FOUR CONTACT PATCHES. ZERO YAW ASSIST.</div>
+            </div>
+            <div class="stats panel">
+                <div class="stat">
+                    <small>練習時間</small>
+                    <strong id="time">00:00.000</strong>
+                </div>
+                <div class="stat">
+                    <small>當前路面</small>
+                    <strong id="surface">碎石</strong>
+                </div>
+                <div class="stat optional">
+                    <small>累積行駛</small>
+                    <strong id="distance">0.00 km</strong>
+                </div>
+                <div class="stat optional">
+                    <small>輸入裝置</small>
+                    <strong id="inputName">KEYBOARD</strong>
+                </div>
+            </div>
+        </header>
+
+        <aside id="left" class="panel">
+            <div class="title">
+                <span>前方路線</span>
+                <span class="green">LIVE</span>
+            </div>
+            <canvas id="map" width="376" height="360"></canvas>
+            <div class="row">
+                <span>路線提示</span>
+                <span id="pace" class="orange">直線</span>
+            </div>
+            <div class="row">
+                <span>有效檢查點</span>
+                <span id="checkpoints" class="mono">0</span>
+            </div>
+            <div class="row">
+                <span>下個檢查點</span>
+                <span id="nextGate" class="mono">195 m</span>
+            </div>
+            <div class="micro">
+                地圖上方為車頭方向。路線提示由前方曲率估算，不取代實際觀察。
+            </div>
+        </aside>
+
+        <aside id="telemetry" class="panel">
+            <div class="title">
+                <span>動力學遙測</span>
+                <span id="physicsRate" class="green">240 Hz</span>
+            </div>
+
+            <div class="g-row">
+                <canvas id="g" width="224" height="224"></canvas>
+                <div>
+                    <div class="micro">側滑角 β · 正值向左</div>
+                    <div id="beta" class="mono">0.0°</div>
+                    <div id="gText" class="micro mono">L 0.00 / F 0.00 G</div>
+                </div>
+            </div>
+
+            <div id="wheels" class="wheels"></div>
+
+            <div class="row">
+                <span>前輪轉向</span>
+                <span id="steerText" class="mono">置中</span>
+            </div>
+            <div class="row">
+                <span>回正力矩 / 模擬值</span>
+                <span id="sat" class="mono">0.0 Nm</span>
+            </div>
+            <div class="row">
+                <span>傳動</span>
+                <span id="drive" class="mono">AUTO · AWD 35:65</span>
+            </div>
+            <div class="row">
+                <span>效能</span>
+                <span id="performance" class="mono">60 FPS · 1.00×</span>
+            </div>
+
+            <canvas id="trace" width="520" height="136"></canvas>
+            <div class="micro">
+                <span class="orange">橘：側滑角</span>
+                ／
+                <span class="green">綠：前輪角</span>
+                ／ 最近 6 秒
+            </div>
+            <div class="micro">
+                色條：摩擦上限使用率。κ：縱向滑移。N：接地負載。
+                行程：彈簧壓縮量，負值為伸張。
+            </div>
+        </aside>
+
+        <section id="dash" class="panel">
+            <div id="lights"></div>
+            <div class="dash-main mono">
+                <div>
+                    <span id="speed">0</span>
+                    <span class="micro">KM/H</span>
+                </div>
+                <div style="text-align: right;">
+                    <div id="rpm">1,000</div>
+                    <div class="micro">RPM / 7,200</div>
+                </div>
+                <div id="gear">1</div>
+            </div>
+
+            <div id="steerTrack"><i id="steerDot"></i></div>
+            <div class="steer-label">
+                <span>← 左轉</span>
+                <span>實際前輪轉向</span>
+                <span>右轉 →</span>
+            </div>
+
+            <div class="pedals">
+                <div>
+                    <div class="micro">油門</div>
+                    <div class="bar"><i id="gasBar"></i></div>
+                </div>
+                <div>
+                    <div class="micro">煞車</div>
+                    <div class="bar"><i id="brakeBar" style="background: #ff7545;"></i></div>
+                </div>
+                <div>
+                    <div class="micro">後輪手煞車</div>
+                    <div class="bar"><i id="handBar" style="background: #f0d27e;"></i></div>
+                </div>
+            </div>
+        </section>
+
+        <div class="controls">
+            <div><kbd>W</kbd><kbd>S</kbd> 油門／煞車　<kbd>A</kbd><kbd>D</kbd> 左／右</div>
+            <div><kbd>SPACE</kbd> 後輪手煞車　方向鍵亦可操作</div>
+            <div><kbd>Q</kbd><kbd>E</kbd> 降／升檔　<kbd>M</kbd> 自排／手排</div>
+            <div><kbd>X</kbd> 前進／倒車　<kbd>R</kbd> 扶正並返回道路</div>
+            <div><kbd>C</kbd> 視角　<kbd>T</kbd> 遙測　<kbd>P</kbd> 暫停</div>
+            <div class="micro">無 ABS／TCS／ESP · 不直接修改車身偏航來製造飄移</div>
+        </div>
+
+        <div class="actions">
+            <button id="cameraButton">視角 C</button>
+            <button id="pauseButton">暫停 P</button>
+            <button id="settingsButton">設定</button>
+            <button id="resetButton">重置 R</button>
+        </div>
+
+        <div id="toast"></div>
+        <div id="pause">
+            PAUSED
+            <small>按 P 或「繼續」恢復駕駛</small>
+        </div>
+    </div>
+
+    <div id="intro" class="overlay">
+        <div class="modal">
+            <div class="micro">DYNAMICS LAB / REVISION 02</div>
+            <h1>RALLY <span>/ RAW 2</span></h1>
+            <div class="lead">方向正確，失控才有意義。</div>
+
+            <div class="features">
+                <div class="feature">
+                    <strong>轉向座標修正</strong>
+                    左鍵確實左轉，右鍵確實右轉。<br>
+                    同步修正輪位、方向盤、地圖與遙測符號。
+                </div>
+                <div class="feature">
+                    <strong>物理穩定性升級</strong>
+                    輪胎旋轉子步進、剛體接觸衝量。<br>
+                    坡面重置、低速制動與安全換檔。
+                </div>
+                <div class="feature">
+                    <strong>完整練習流程</strong>
+                    路線圖、檢查點、三種視角。<br>
+                    失焦暫停、裝置映射、效能監測。
+                </div>
+            </div>
+
+            <p class="note">
+                已針對程式中可辨識的座標、輸入、接觸、資源釋放與狀態管理問題修訂。
+                這不等於已在所有瀏覽器與硬體上完成測試，也不保證不存在其他缺陷。
+                建議先低速測試左右轉向，再逐步嘗試重煞、鐘擺與反胎。
+            </p>
+
+            <p class="note warning">
+                本頁為六自由度剛體、四輪接觸與近似組合滑移輪胎的可操作原型，
+                並非經實車量測驗證的 WRC 工程模擬。自動離合器常駐。
+                手把震動不等於方向盤力回饋；標準瀏覽器沒有通用方向盤 FFB API，
+                本版僅支援可被 Gamepad API 辨識的方向盤輸入。
+                樹幹使用碰撞代理，路樁與檢查點為非碰撞標示。
+            </p>
+
+            <div class="footer">
+                <div id="loadStatus" class="micro">
+                    正在載入 3D 引擎…<br>
+                    建議桌面 Chrome／Edge；首次載入需要網路。
+                </div>
+                <button id="startButton" class="primary" disabled>開始駕駛 →</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings" class="overlay">
+        <div class="modal">
+            <h2>駕駛與裝置設定</h2>
+
+            <label class="setting">
+                <span>路面<small>自動模式每 360 公尺切換道路材質</small></span>
+                <select id="surfaceSetting">
+                    <option value="auto">自動：碎石／柏油／泥濘</option>
+                    <option value="gravel">全域碎石</option>
+                    <option value="asphalt">全域乾燥柏油</option>
+                    <option value="mud">全域泥濘</option>
+                </select>
+            </label>
+
+            <label class="setting">
+                <span>輸入模式</span>
+                <select id="deviceSetting">
+                    <option value="auto">鍵盤／標準手把自動切換</option>
+                    <option value="keyboard">僅鍵盤</option>
+                    <option value="gamepad">手把</option>
+                    <option value="wheel">方向盤／自訂軸</option>
+                </select>
+            </label>
+
+            <label class="setting">
+                <span>Gamepad 裝置<small>接上裝置後可能需要按一下裝置按鍵</small></span>
+                <select id="padSetting">
+                    <option value="-1">自動選擇</option>
+                </select>
+            </label>
+
+            <label class="setting">
+                <span>鍵盤轉向速度<small>不依車速暗中縮減轉角，不施加偏航輔助</small></span>
+                <input id="keyRateSetting" type="range" min="0.5" max="3" step="0.05" value="1.6">
+            </label>
+
+            <label class="setting">
+                <span>類比死區</span>
+                <input id="deadzoneSetting" type="range" min="0" max="0.2" step="0.005" value="0.04">
+            </label>
+
+            <label class="setting">
+                <span>類比線性增益</span>
+                <input id="gainSetting" type="range" min="0.5" max="1.5" step="0.01" value="1">
+            </label>
+
+            <label class="setting">
+                <span>後軸扭矩比例<small>前／後軸均採近似限滑差速器</small></span>
+                <input id="rearSetting" type="range" min="0.4" max="1" step="0.01" value="0.65">
+            </label>
+
+            <label class="setting">
+                <span>方向盤轉向軸<small>預設裝置軸：向右為正，程式轉換為車體座標</small></span>
+                <input id="steerAxisSetting" type="number" min="0" max="31" value="0">
+            </label>
+
+            <label class="setting">
+                <span>方向盤油門軸</span>
+                <input id="gasAxisSetting" type="number" min="0" max="31" value="2">
+            </label>
+
+            <label class="setting">
+                <span>方向盤煞車軸</span>
+                <input id="brakeAxisSetting" type="number" min="0" max="31" value="3">
+            </label>
+
+            <label class="setting">
+                <span>踏板軸格式<small>不支援單一合併踏板軸；請在驅動中拆分</small></span>
+                <select id="pedalSetting">
+                    <option value="negative">放開 +1，踩到底 −1</option>
+                    <option value="positive">放開 −1，踩到底 +1</option>
+                    <option value="zero">放開 0，踩到底 +1</option>
+                </select>
+            </label>
+
+            <label class="setting">
+                <span>反轉方向盤原始軸<small>只有裝置軸方向與預設相反時才勾選</small></span>
+                <input id="invertSetting" type="checkbox">
+            </label>
+
+            <label class="setting">
+                <span>手把失控震動</span>
+                <input id="rumbleSetting" type="checkbox" checked>
+            </label>
+
+            <label class="setting">
+                <span>音效音量</span>
+                <input id="volumeSetting" type="range" min="0" max="1" step="0.01" value="0.4">
+            </label>
+
+            <label class="setting">
+                <span>畫面品質<small>降低品質不改變物理步長</small></span>
+                <select id="qualitySetting">
+                    <option value="high">高：陰影／較高解析度</option>
+                    <option value="medium">中：陰影／標準解析度</option>
+                    <option value="low">低：關閉陰影</option>
+                </select>
+            </label>
+
+            <p id="deviceInfo" class="note">尚未偵測到裝置。</p>
+            <p class="note">
+                標準手把：左搖桿轉向、RT 油門、LT 煞車、A 手煞車、
+                X 降檔、Y 升檔、B 視角、Start 暫停。
+                自訂方向盤不套用這組按鈕映射，其他操作請用鍵盤。
+                回正力矩只參與虛擬轉向機構；方向盤模式直接採用實體轉角。
+            </p>
+            <p id="selfTest" class="note"></p>
+
+            <div class="footer">
+                <button id="restartButton">重新開始練習</button>
+                <button id="closeSettings" class="primary">返回駕駛</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        const $ = (id) => document.getElementById(id);
+        const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+        const mix = (a, b, t) => a + (b - a) * t;
+        const moveToward = (a, b, delta) => a + clamp(b - a, -delta, delta);
+        const smoothstep = (a, b, value) => {
+            const t = clamp((value - a) / (b - a), 0, 1);
+            return t * t * (3 - 2 * t);
+        };
+        const wrapAngle = (angle) => Math.atan2(Math.sin(angle), Math.cos(angle));
+        const DEG = 180 / Math.PI;
+        const DT = 1 / 240;
+        const G = 9.81;
+        const MAX_STEPS = 24;
+
+        let THREE;
+
+        try {
+            THREE = await import(
+                "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js"
+            );
+        } catch (error) {
+            $("loadStatus").textContent =
+                "3D 引擎載入失敗。請檢查網路、CDN 存取或瀏覽器限制。";
+            throw error;
+        }
+
+        const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
+        const UP = V(0, 1, 0);
+
+        /*
+         * 統一右手座標：
+         * 車體 +X = 左、+Y = 上、+Z = 前。
+         * 正偏航／正轉向 = 左轉。
+         * 鍵盤左輸入為正；Gamepad 向右為正的原始軸必須取負。
+         * 不以反轉模型或相機掩蓋轉向符號錯誤。
+         */
+        const keyboardAxis = (left, right) => Number(left) - Number(right);
+        const deviceAxis = (raw, invert = false) => -raw * (invert ? -1 : 1);
+        const MAX_STEER = 0.59;
+
+        const config = {
+            surface: "auto",
+            device: "auto",
+            padIndex: -1,
+            keyRate: 1.6,
+            deadzone: 0.04,
+            gain: 1,
+            rearBias: 0.65,
+            steerAxis: 0,
+            gasAxis: 2,
+            brakeAxis: 3,
+            pedal: "negative",
+            invert: false,
+            rumble: true,
+            volume: 0.4,
+            quality: "high"
+        };
+
+        const materials = {
+            gravel: {
+                name: "碎石",
+                mu: 0.79,
+                shape: 1.48,
+                stiffness: 1.3,
+                relaxation: 0.42,
+                rolling: 0.025,
+                color: new THREE.Color("#938677"),
+                dust: new THREE.Color("#bba88a")
+            },
+            asphalt: {
+                name: "乾燥柏油",
+                mu: 1.16,
+                shape: 1.8,
+                stiffness: 1.55,
+                relaxation: 0.22,
+                rolling: 0.013,
+                color: new THREE.Color("#464d50"),
+                dust: new THREE.Color("#a5abad")
+            },
+            mud: {
+                name: "泥濘",
+                mu: 0.42,
+                shape: 1.38,
+                stiffness: 1.05,
+                relaxation: 0.78,
+                rolling: 0.054,
+                color: new THREE.Color("#695b4a"),
+                dust: new THREE.Color("#766049")
+            },
+            grass: {
+                name: "路外草地",
+                mu: 0.57,
+                shape: 1.45,
+                stiffness: 1.15,
+                relaxation: 0.58,
+                rolling: 0.065,
+                color: new THREE.Color("#667759"),
+                dust: new THREE.Color("#8a866b")
+            }
+        };
+
+        function roadX(z) {
+            return 23 * Math.sin(z * 0.006) + 13 * Math.sin(z * 0.016);
+        }
+
+        function roadHeading(z) {
+            return Math.atan(
+                0.138 * Math.cos(z * 0.006) +
+                0.208 * Math.cos(z * 0.016)
+            );
+        }
+
+        function roadOffset(x, z) {
+            return (x - roadX(z)) / Math.sqrt(
+                1 + Math.tan(roadHeading(z)) ** 2
+            );
+        }
+
+        function heightAt(x, z) {
+            const offset = x - roadX(z);
+            const edge = smoothstep(6, 25, Math.abs(offset));
+            const phase = ((z % 600) + 600) % 600;
+            const jumpDistance = Math.abs(phase - 235);
+            const jump = jumpDistance < 25
+                ? 1.7 * (1 + Math.cos(jumpDistance / 25 * Math.PI))
+                : 0;
+
+            return (
+                2.4 * Math.sin(z * 0.015) +
+                0.65 * Math.sin(z * 0.036) +
+                jump +
+                0.011 * offset * Math.sin(z * 0.023) +
+                0.019 * Math.sin(z * 0.85 + x * 0.35) +
+                0.012 * Math.sin(z * 1.3 - x * 0.42) +
+                edge * (
+                    0.04 * Math.abs(offset) +
+                    2.8 * Math.sin(x * 0.05 + z * 0.017) +
+                    1.6 * Math.cos(z * 0.043 - x * 0.033)
+                )
+            );
+        }
+
+        function groundNormal(x, z) {
+            const e = 0.15;
+
+            return V(
+                heightAt(x - e, z) - heightAt(x + e, z),
+                2 * e,
+                heightAt(x, z - e) - heightAt(x, z + e)
+            ).normalize();
+        }
+
+        function materialAt(x, z) {
+            if (config.surface !== "auto") {
+                return materials[config.surface];
+            }
+
+            if (Math.abs(roadOffset(x, z)) > 6) {
+                return materials.grass;
+            }
+
+            const section = ((Math.floor(z / 360) % 3) + 3) % 3;
+            return [
+                materials.gravel,
+                materials.asphalt,
+                materials.mud
+            ][section];
+        }
+
+        let renderer;
+
+        try {
+            renderer = new THREE.WebGLRenderer({
+                canvas: $("world"),
+                antialias: true,
+                powerPreference: "high-performance"
+            });
+        } catch (error) {
+            $("loadStatus").textContent =
+                "WebGL 無法啟動。請啟用硬體加速或使用支援 WebGL 的瀏覽器。";
+            throw error;
+        }
+
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.12;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color("#b3c8ce");
+        scene.fog = new THREE.FogExp2("#b3c8ce", 0.006);
+
+        const camera = new THREE.PerspectiveCamera(
+            63,
+            innerWidth / innerHeight,
+            0.045,
+            900
+        );
+
+        scene.add(new THREE.HemisphereLight("#d9efff", "#554734", 2.15));
+
+        const sun = new THREE.DirectionalLight("#fff0d0", 3.3);
+        sun.castShadow = true;
+        sun.shadow.mapSize.set(2048, 2048);
+        sun.shadow.camera.left = -34;
+        sun.shadow.camera.right = 34;
+        sun.shadow.camera.top = 34;
+        sun.shadow.camera.bottom = -34;
+        sun.shadow.camera.near = 1;
+        sun.shadow.camera.far = 160;
+        sun.shadow.normalBias = 0.035;
+        sun.shadow.bias = -0.0001;
+        scene.add(sun, sun.target);
+
+        function applyQuality() {
+            const quality = config.quality;
+            renderer.setPixelRatio(
+                quality === "high"
+                    ? Math.min(devicePixelRatio, 1.65)
+                    : quality === "medium"
+                        ? Math.min(devicePixelRatio, 1.15)
+                        : 1
+            );
+            renderer.setSize(innerWidth, innerHeight);
+            renderer.shadowMap.enabled = quality !== "low";
+            scene.traverse((object) => {
+                if (object.material) {
+                    const list = Array.isArray(object.material)
+                        ? object.material
+                        : [object.material];
+
+                    for (const material of list) {
+                        material.needsUpdate = true;
+                    }
+                }
+            });
+        }
+
+        const standard = (color, roughness = 0.8, metalness = 0) => {
+            return new THREE.MeshStandardMaterial({
+                color,
+                roughness,
+                metalness
+            });
+        };
+
+        const groundMaterial = new THREE.MeshStandardMaterial({
+            vertexColors: true,
+            roughness: 1
+        });
+        const barkMaterial = standard("#514738");
+        const leafMaterial = standard("#355449");
+        const whiteMaterial = standard("#ece9d1");
+        const orangeMaterial = standard("#ff7545", 0.4, 0.15);
+        const blackMaterial = standard("#172126");
+        const paintMaterial = standard("#e0ebe3", 0.33, 0.3);
+        const rubberMaterial = standard("#171b1c", 0.98);
+        const rimMaterial = standard("#aab3b7", 0.27, 0.8);
+
+        const trunkGeometry = new THREE.CylinderGeometry(0.19, 0.31, 4, 6);
+        const leafGeometry = new THREE.ConeGeometry(2.2, 7.5, 6);
+        const postGeometry = new THREE.BoxGeometry(0.13, 0.9, 0.13);
+        const capGeometry = new THREE.BoxGeometry(0.15, 0.2, 0.15);
+
+        const CHUNK_LENGTH = 160;
+        const chunks = new Map();
+        let chunkCenter = null;
+        let nearbyTrees = [];
+
+        function randomGenerator(seed) {
+            let s = seed | 0;
+
+            return () => {
+                s = (Math.imul(s, 1664525) + 1013904223) | 0;
+                return (s >>> 0) / 4294967296;
+            };
+        }
+
+        function createChunk(index) {
+            const group = new THREE.Group();
+            const start = index * CHUNK_LENGTH;
+            const nx = 104;
+            const nz = 80;
+            const positions = [];
+            const colors = [];
+            const indices = [];
+            const color = new THREE.Color();
+            const grassTint = new THREE.Color("#516b50");
+
+            for (let j = 0; j <= nz; j++) {
+                const z = start + j * CHUNK_LENGTH / nz;
+
+                for (let i = 0; i <= nx; i++) {
+                    const u = i / nx * 2 - 1;
+                    const offset = Math.sign(u) *
+                        Math.pow(Math.abs(u), 1.7) * 230;
+                    const x = roadX(z) + offset;
+
+                    positions.push(x, heightAt(x, z), z);
+                    color.copy(materialAt(x, z).color);
+
+                    if (config.surface === "auto") {
+                        color.lerp(
+                            grassTint,
+                            smoothstep(8, 45, Math.abs(offset)) * 0.6
+                        );
+                    }
+
+                    color.multiplyScalar(
+                        0.94 + 0.055 * Math.sin(x * 11.3 + z * 7.1)
+                    );
+                    colors.push(color.r, color.g, color.b);
+                }
+            }
+
+            for (let j = 0; j < nz; j++) {
+                for (let i = 0; i < nx; i++) {
+                    const a = j * (nx + 1) + i;
+                    const b = a + 1;
+                    const c = a + nx + 1;
+                    const d = c + 1;
+                    indices.push(a, c, b, b, c, d);
+                }
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute(
+                "position",
+                new THREE.Float32BufferAttribute(positions, 3)
+            );
+            geometry.setAttribute(
+                "color",
+                new THREE.Float32BufferAttribute(colors, 3)
+            );
+            geometry.setIndex(indices);
+            geometry.computeVertexNormals();
+
+            const terrain = new THREE.Mesh(geometry, groundMaterial);
+            terrain.receiveShadow = true;
+            group.add(terrain);
+
+            const random = randomGenerator(index * 92479 + 7241);
+            const trunks = new THREE.InstancedMesh(
+                trunkGeometry,
+                barkMaterial,
+                26
+            );
+            const leaves = new THREE.InstancedMesh(
+                leafGeometry,
+                leafMaterial,
+                26
+            );
+            const dummy = new THREE.Object3D();
+            const trees = [];
+
+            for (let i = 0; i < 26; i++) {
+                const z = start + random() * CHUNK_LENGTH;
+                const side = random() < 0.5 ? -1 : 1;
+                const x = roadX(z) + side * (15 + random() * 125);
+                const y = heightAt(x, z);
+                const scale = 0.75 + random() * 0.7;
+
+                dummy.scale.setScalar(scale);
+                dummy.rotation.set(0, random() * Math.PI, 0);
+                dummy.position.set(x, y + 2 * scale, z);
+                dummy.updateMatrix();
+                trunks.setMatrixAt(i, dummy.matrix);
+
+                dummy.position.y = y + 6.2 * scale;
+                dummy.updateMatrix();
+                leaves.setMatrixAt(i, dummy.matrix);
+
+                trees.push({
+                    x,
+                    y,
+                    z,
+                    radius: 0.31 * scale,
+                    height: 4 * scale
+                });
+            }
+
+            trunks.castShadow = true;
+            leaves.castShadow = true;
+            trunks.computeBoundingSphere();
+            leaves.computeBoundingSphere();
+            group.add(trunks, leaves);
+
+            for (let z = start; z < start + CHUNK_LENGTH; z += 20) {
+                for (const side of [-1, 1]) {
+                    const x = roadX(z) + side * 6.5;
+                    const y = heightAt(x, z);
+                    const post = new THREE.Mesh(postGeometry, whiteMaterial);
+                    const cap = new THREE.Mesh(capGeometry, orangeMaterial);
+                    post.position.set(x, y + 0.45, z);
+                    cap.position.set(x, y + 0.75, z);
+                    group.add(post, cap);
+                }
+            }
+
+            scene.add(group);
+            chunks.set(index, { group, geometry, trunks, leaves, trees });
+        }
+
+        function updateTerrain(force = false) {
+            const center = Math.floor(car.position.z / CHUNK_LENGTH);
+
+            if (!force && center === chunkCenter) {
+                return;
+            }
+
+            chunkCenter = center;
+
+            for (const [index, chunk] of chunks) {
+                if (force || index < center - 3 || index > center + 4) {
+                    scene.remove(chunk.group);
+                    chunk.geometry.dispose();
+                    chunk.trunks.dispose();
+                    chunk.leaves.dispose();
+                    chunks.delete(index);
+                }
+            }
+
+            for (let index = center - 3; index <= center + 4; index++) {
+                if (!chunks.has(index)) {
+                    createChunk(index);
+                }
+            }
+
+            nearbyTrees = [];
+
+            for (const [index, chunk] of chunks) {
+                if (Math.abs(index - center) <= 1) {
+                    nearbyTrees.push(...chunk.trees);
+                }
+            }
+        }
+
+        const MASS = 1280;
+        const INERTIA = V(620, 1760, 1510);
+        const INV_INERTIA = V(
+            1 / INERTIA.x,
+            1 / INERTIA.y,
+            1 / INERTIA.z
+        );
+        const FRONT_Z = 1.27;
+        const REAR_Z = -1.33;
+        const TRACK_HALF = 0.79;
+        const WHEELBASE = FRONT_Z - REAR_Z;
+        const RADIUS = 0.335;
+        const REST_LENGTH = 0.49;
+        const MAX_LENGTH = 0.565;
+        const MIN_LENGTH = 0.13;
+        const WHEEL_INERTIA = 1.65;
+
+        const car = {
+            position: V(),
+            previousPosition: V(),
+            velocity: V(),
+            quaternion: new THREE.Quaternion(),
+            previousQuaternion: new THREE.Quaternion(),
+            inverseQuaternion: new THREE.Quaternion(),
+            angularVelocity: V(),
+            force: V(),
+            torque: V(),
+            steer: 0,
+            steerVelocity: 0,
+            sat: 0,
+            engineOmega: 105,
+            rpm: 1000,
+            gear: 1,
+            automatic: true,
+            shiftTime: 0,
+            throttle: 0,
+            brake: 0,
+            handbrake: 0,
+            slip: 0,
+            specificG: V(0, 1, 0),
+            distance: 0
+        };
+
+        const wheels = Array.from({ length: 4 }, (_, index) => {
+            const front = index < 2;
+
+            return {
+                label: ["FL", "FR", "RL", "RR"][index],
+                front,
+                mount: V(
+                    index % 2 === 0 ? TRACK_HALF : -TRACK_HALF,
+                    -0.075,
+                    front ? FRONT_Z : REAR_Z
+                ),
+                origin: V(),
+                point: V(),
+                normal: V(0, 1, 0),
+                forward: V(0, 0, 1),
+                left: V(1, 0, 0),
+                contact: false,
+                load: 0,
+                length: REST_LENGTH,
+                previousLength: REST_LENGTH,
+                compression: 0,
+                angle: 0,
+                previousAngle: 0,
+                omega: 0,
+                spin: 0,
+                previousSpin: 0,
+                kappa: 0,
+                alpha: 0,
+                fx: 0,
+                fy: 0,
+                utilization: 0,
+                material: materials.gravel,
+                emission: 0,
+                lastMark: null,
+                visual: null
+            };
+        });
+
+        const carVisual = new THREE.Group();
+        scene.add(carVisual);
+
+        function box(parent, material, size, position) {
+            const mesh = new THREE.Mesh(
+                new THREE.BoxGeometry(...size),
+                material
+            );
+            mesh.position.set(...position);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            parent.add(mesh);
+            return mesh;
+        }
+
+        box(carVisual, paintMaterial, [1.8, 0.43, 3.85], [0, 0, 0]);
+        box(carVisual, blackMaterial, [1.85, 0.14, 3.63], [0, -0.24, 0]);
+        box(carVisual, paintMaterial, [1.73, 0.21, 1.22], [0, 0.27, 1.28]);
+        box(carVisual, orangeMaterial, [0.49, 0.014, 1.24], [0.31, 0.384, 1.28]);
+        box(carVisual, blackMaterial, [0.5, 0.06, 0.37], [0, 0.412, 1.17]);
+        box(carVisual, paintMaterial, [1.48, 0.1, 1.46], [0, 0.95, -0.23]);
+        box(carVisual, orangeMaterial, [0.49, 0.012, 1.47], [0.31, 1.007, -0.23]);
+        box(carVisual, paintMaterial, [1.72, 0.24, 0.63], [0, 0.25, -1.56]);
+        box(carVisual, blackMaterial, [1.86, 0.09, 0.4], [0, 0.82, -1.73]);
+        box(carVisual, blackMaterial, [0.95, 0.16, 0.03], [0, 0.06, 1.945]);
+
+        const glassMaterial = new THREE.MeshStandardMaterial({
+            color: "#b0d2db",
+            roughness: 0.15,
+            metalness: 0.05,
+            transparent: true,
+            opacity: 0.1,
+            depthWrite: false,
+            side: THREE.DoubleSide
+        });
+
+        const headlightMaterial = new THREE.MeshStandardMaterial({
+            color: "#fff8d8",
+            emissive: "#ffe9b3",
+            emissiveIntensity: 1.2
+        });
+
+        const brakeLightMaterial = new THREE.MeshStandardMaterial({
+            color: "#a32019",
+            emissive: "#ff2416",
+            emissiveIntensity: 0.2
+        });
+
+        for (const side of [-1, 1]) {
+            const aPillar = box(
+                carVisual,
+                paintMaterial,
+                [0.075, 0.77, 0.075],
+                [side * 0.755, 0.63, 0.64]
+            );
+            aPillar.rotation.x = -0.34;
+
+            const cPillar = box(
+                carVisual,
+                paintMaterial,
+                [0.09, 0.72, 0.085],
+                [side * 0.755, 0.63, -1.0]
+            );
+            cPillar.rotation.x = 0.27;
+
+            box(carVisual, blackMaterial, [0.075, 0.67, 0.07], [side * 0.8, 0.6, -0.28]);
+            box(carVisual, glassMaterial, [0.014, 0.48, 1.3], [side * 0.807, 0.63, -0.14]);
+            box(carVisual, orangeMaterial, [0.02, 0.23, 2.25], [side * 0.913, 0.025, -0.12]);
+            box(carVisual, blackMaterial, [0.23, 0.12, 0.19], [side * 1.0, 0.53, 0.66]);
+            box(carVisual, blackMaterial, [0.1, 0.34, 0.1], [side * 0.63, 0.61, -1.7]);
+            box(carVisual, headlightMaterial, [0.47, 0.14, 0.028], [side * 0.57, 0.19, 1.944]);
+            box(carVisual, brakeLightMaterial, [0.34, 0.13, 0.028], [side * 0.64, 0.2, -1.944]);
+
+            for (const z of [FRONT_Z, REAR_Z]) {
+                box(carVisual, blackMaterial, [0.15, 0.09, 0.9], [side * 0.9, 0.19, z]);
+            }
+        }
+
+        const windshield = box(
+            carVisual,
+            glassMaterial,
+            [1.44, 0.65, 0.014],
+            [0, 0.65, 0.68]
+        );
+        windshield.rotation.x = -0.34;
+
+        const rearGlass = box(
+            carVisual,
+            glassMaterial,
+            [1.42, 0.54, 0.014],
+            [0, 0.65, -1.05]
+        );
+        rearGlass.rotation.x = 0.27;
+
+        box(carVisual, blackMaterial, [1.5, 0.15, 0.4], [0, 0.39, 0.61]);
+
+        for (const x of [-0.4, 0.4]) {
+            box(carVisual, blackMaterial, [0.52, 0.47, 0.15], [x, 0.38, -0.52]);
+            box(carVisual, blackMaterial, [0.49, 0.11, 0.51], [x, 0.12, -0.28]);
+            box(carVisual, orangeMaterial, [0.055, 0.42, 0.024], [x - 0.12, 0.38, -0.432]);
+            box(carVisual, orangeMaterial, [0.055, 0.42, 0.024], [x + 0.12, 0.38, -0.432]);
+        }
+
+        const steeringWheel = new THREE.Group();
+        steeringWheel.position.set(0.4, 0.49, 0.43);
+        steeringWheel.rotation.x = -0.16;
+        carVisual.add(steeringWheel);
+
+        steeringWheel.add(new THREE.Mesh(
+            new THREE.TorusGeometry(0.185, 0.023, 8, 28),
+            blackMaterial
+        ));
+        box(steeringWheel, rimMaterial, [0.31, 0.025, 0.018], [0, 0, 0]);
+        box(steeringWheel, rimMaterial, [0.025, 0.15, 0.018], [0, -0.07, 0]);
+        box(steeringWheel, orangeMaterial, [0.034, 0.032, 0.026], [0, 0.185, 0]);
+
+        const tireGeometry = new THREE.CylinderGeometry(
+            RADIUS,
+            RADIUS,
+            0.245,
+            24
+        );
+        tireGeometry.rotateZ(Math.PI / 2);
+
+        const rimGeometry = new THREE.CylinderGeometry(0.205, 0.205, 0.252, 12);
+        rimGeometry.rotateZ(Math.PI / 2);
+
+        for (const wheel of wheels) {
+            const pivot = new THREE.Group();
+            const rotating = new THREE.Group();
+            pivot.add(rotating);
+            carVisual.add(pivot);
+
+            const tire = new THREE.Mesh(tireGeometry, rubberMaterial);
+            const rim = new THREE.Mesh(rimGeometry, rimMaterial);
+            tire.castShadow = true;
+            rim.castShadow = true;
+            rotating.add(tire, rim);
+
+            for (let index = 0; index < 5; index++) {
+                const spoke = box(
+                    rotating,
+                    blackMaterial,
+                    [0.26, 0.03, 0.35],
+                    [0, 0, 0]
+                );
+                spoke.rotation.x = index / 5 * Math.PI;
+            }
+
+            wheel.visual = { pivot, rotating };
+        }
+
+        const gateVisual = new THREE.Group();
+        scene.add(gateVisual);
+
+        for (const side of [-1, 1]) {
+            box(gateVisual, orangeMaterial, [0.12, 3.3, 0.12], [side * 6.2, 1.65, 0]);
+            box(gateVisual, blackMaterial, [0.7, 1.5, 0.06], [side * 6.2, 2.4, 0]);
+            box(gateVisual, orangeMaterial, [0.72, 0.2, 0.07], [side * 6.2, 2.8, 0]);
+        }
+
+        let nextGateZ = 200;
+        let checkpointCount = 0;
+        let lastCheckpointTime = 0;
+        let simulationTime = 0;
+
+        function positionGate() {
+            gateVisual.position.set(
+                roadX(nextGateZ),
+                heightAt(roadX(nextGateZ), nextGateZ),
+                nextGateZ
+            );
+            gateVisual.rotation.y = roadHeading(nextGateZ);
+        }
+
+        function pointVelocity(point) {
+            return new THREE.Vector3().crossVectors(
+                car.angularVelocity,
+                point.clone().sub(car.position)
+            ).add(car.velocity);
+        }
+
+        function applyForce(force, point = null) {
+            car.force.add(force);
+
+            if (point) {
+                car.torque.add(new THREE.Vector3().crossVectors(
+                    point.clone().sub(car.position),
+                    force
+                ));
+            }
+        }
+
+        function inverseInertiaWorld(vector) {
+            return vector.clone()
+                .applyQuaternion(car.inverseQuaternion)
+                .multiply(INV_INERTIA)
+                .applyQuaternion(car.quaternion);
+        }
+
+        function applyImpulse(impulse, point) {
+            car.velocity.addScaledVector(impulse, 1 / MASS);
+            const angularImpulse = new THREE.Vector3().crossVectors(
+                point.clone().sub(car.position),
+                impulse
+            );
+            car.angularVelocity.add(inverseInertiaWorld(angularImpulse));
+        }
+
+        function effectiveInverseMass(point, direction) {
+            const arm = point.clone().sub(car.position);
+            const angular = inverseInertiaWorld(
+                new THREE.Vector3().crossVectors(arm, direction)
+            );
+            return 1 / MASS + direction.dot(
+                new THREE.Vector3().crossVectors(angular, arm)
+            );
+        }
+
+        function steeringAngleAt(centerAngle, mountX) {
+            if (Math.abs(centerAngle) < 0.0001) {
+                return centerAngle;
+            }
+
+            const radius = WHEELBASE / Math.tan(centerAngle);
+            return Math.atan(WHEELBASE / (radius - mountX));
+        }
+
+        const ratios = {
+            "-1": -3.12,
+            "0": 0,
+            "1": 3.16,
+            "2": 2.19,
+            "3": 1.62,
+            "4": 1.27,
+            "5": 1.03,
+            "6": 0.86
+        };
+
+        function meanDrivenOmega() {
+            const front = (wheels[0].omega + wheels[1].omega) * 0.5;
+            const rear = (wheels[2].omega + wheels[3].omega) * 0.5;
+            return mix(front, rear, config.rearBias);
+        }
+
+        function requestGear(next, automatic = false) {
+            next = clamp(Math.trunc(next), -1, 6);
+
+            if (next === car.gear || car.shiftTime > 0.01) {
+                return false;
+            }
+
+            const speed = car.velocity.length();
+
+            if (
+                speed > 1.4 &&
+                (
+                    next === -1 ||
+                    (car.gear === -1 && next > 0)
+                )
+            ) {
+                if (!automatic) {
+                    toast("請先煞停，再切換前進／倒車方向。");
+                }
+                return false;
+            }
+
+            const coupledRPM = Math.abs(
+                meanDrivenOmega() * ratios[next] * 4.15 * 60 / (2 * Math.PI)
+            );
+
+            if (next !== 0 && coupledRPM > 7550) {
+                if (!automatic) {
+                    toast("降檔後預估轉速過高，已保留目前檔位。");
+                }
+                return false;
+            }
+
+            car.gear = next;
+            car.shiftTime = 0.2;
+
+            if (audio && car.throttle > 0.4 && car.rpm > 3500) {
+                audio.burst("pop", 0.6);
+            }
+
+            return true;
+        }
+
+        function drivetrain(dt) {
+            car.shiftTime = Math.max(0, car.shiftTime - dt);
+
+            if (car.automatic && car.gear > 0 && car.shiftTime === 0) {
+                const slip = wheels.reduce(
+                    (sum, wheel) => sum + Math.abs(wheel.kappa),
+                    0
+                ) / 4;
+
+                if (car.rpm > 6650 && slip < 0.28 && car.gear < 6) {
+                    requestGear(car.gear + 1, true);
+                } else if (car.rpm < 2500 && car.gear > 1) {
+                    requestGear(car.gear - 1, true);
+                }
+            }
+
+            const ratio = ratios[car.gear] * 4.15;
+            const shaftOmega = meanDrivenOmega() * ratio;
+            const rpm = car.engineOmega * 60 / (2 * Math.PI);
+            const curve = clamp(
+                355 - ((rpm - 4500) / 330) ** 2,
+                145,
+                355
+            );
+            const limiter = rpm >= 7200 ? 0 : 1;
+            const idle = clamp((1030 - rpm) * 0.33, 0, 140);
+            const friction = 18 + car.engineOmega * 0.042;
+
+            let clutch = Math.max(
+                smoothstep(820, 1700, rpm),
+                car.throttle * 0.24
+            );
+
+            if (
+                ratio === 0 ||
+                car.shiftTime > 0.035 ||
+                car.handbrake > 0.1
+            ) {
+                clutch = 0;
+            }
+
+            const clutchTorque = clamp(
+                (car.engineOmega - shaftOmega) * 5.2,
+                -420,
+                420
+            ) * clutch;
+
+            car.engineOmega += (
+                curve * car.throttle * limiter +
+                idle -
+                friction -
+                clutchTorque
+            ) / 0.34 * dt;
+
+            car.engineOmega = clamp(car.engineOmega, 65, 795);
+            car.rpm = car.engineOmega * 60 / (2 * Math.PI);
+
+            const total = clutchTorque * ratio * 0.9;
+            const front = total * (1 - config.rearBias);
+            const rear = total * config.rearBias;
+            const frontLock = clamp(
+                (wheels[1].omega - wheels[0].omega) * 14,
+                -Math.abs(front) * 0.3 - 30,
+                Math.abs(front) * 0.3 + 30
+            );
+            const rearLock = clamp(
+                (wheels[3].omega - wheels[2].omega) * 22,
+                -Math.abs(rear) * 0.37 - 55,
+                Math.abs(rear) * 0.37 + 55
+            );
+
+            return [
+                front * 0.5 + frontLock,
+                front * 0.5 - frontLock,
+                rear * 0.5 + rearLock,
+                rear * 0.5 - rearLock
+            ];
+        }
+
+        const input = {
+            steer: 0,
+            throttle: 0,
+            brake: 0,
+            handbrake: 0,
+            analog: false,
+            wheel: false,
+            activeSteer: false,
+            name: "KEYBOARD"
+        };
+
+        function updateSteering(dt) {
+            const target = input.steer * MAX_STEER;
+
+            if (input.wheel) {
+                const old = car.steer;
+                car.steer = target;
+                car.steerVelocity = (car.steer - old) / dt;
+                return;
+            }
+
+            const stiffness = input.activeSteer
+                ? (input.analog ? 1750 : 1550)
+                : 95;
+            const damping = input.activeSteer ? 60 : 26;
+            const driverTorque = clamp(
+                (target - car.steer) * stiffness,
+                -520,
+                520
+            );
+            const acceleration = (
+                driverTorque +
+                car.sat -
+                damping * car.steerVelocity
+            ) / 5.5;
+
+            car.steerVelocity += acceleration * dt;
+            car.steerVelocity = clamp(car.steerVelocity, -3.7, 3.7);
+            car.steer += car.steerVelocity * dt;
+
+            if (Math.abs(car.steer) > MAX_STEER) {
+                car.steer = clamp(car.steer, -MAX_STEER, MAX_STEER);
+
+                if (car.steerVelocity * car.steer > 0) {
+                    car.steerVelocity = 0;
+                }
+            }
+        }
+
+        function updateSuspension() {
+            const down = V(0, -1, 0).applyQuaternion(car.quaternion);
+
+            for (const wheel of wheels) {
+                wheel.origin.copy(wheel.mount)
+                    .applyQuaternion(car.quaternion)
+                    .add(car.position);
+                wheel.contact = false;
+                wheel.load = 0;
+                wheel.compression = REST_LENGTH - MAX_LENGTH;
+                wheel.length = MAX_LENGTH;
+
+                if (down.y > -0.28) {
+                    continue;
+                }
+
+                let distance = (
+                    wheel.origin.y -
+                    heightAt(wheel.origin.x, wheel.origin.z)
+                ) / -down.y;
+
+                for (let iteration = 0; iteration < 5; iteration++) {
+                    const x = wheel.origin.x + down.x * distance;
+                    const z = wheel.origin.z + down.z * distance;
+                    distance = (
+                        wheel.origin.y - heightAt(x, z)
+                    ) / -down.y;
+                }
+
+                const length = distance - RADIUS;
+
+                if (distance < 0 || length > MAX_LENGTH) {
+                    continue;
+                }
+
+                wheel.point.copy(wheel.origin).addScaledVector(down, distance);
+                wheel.point.y = heightAt(wheel.point.x, wheel.point.z);
+                wheel.normal.copy(groundNormal(wheel.point.x, wheel.point.z));
+                wheel.material = materialAt(wheel.point.x, wheel.point.z);
+                wheel.length = clamp(length, MIN_LENGTH, MAX_LENGTH);
+                wheel.compression = REST_LENGTH - length;
+                wheel.contact = true;
+
+                const normalSpeed = pointVelocity(wheel.point).dot(wheel.normal);
+                const alignment = Math.max(0.45, -down.dot(wheel.normal));
+                const spring = wheel.front ? 39000 : 36500;
+                const damping = normalSpeed < 0 ? 2850 : 3600;
+                const bumpStop = Math.max(0, MIN_LENGTH - length) * 160000;
+
+                wheel.load = clamp(
+                    wheel.compression * spring -
+                    normalSpeed / alignment * damping +
+                    bumpStop,
+                    0,
+                    23500
+                );
+            }
+
+            for (const [leftIndex, rightIndex] of [[0, 1], [2, 3]]) {
+                const left = wheels[leftIndex];
+                const right = wheels[rightIndex];
+                const stiffness = left.front ? 6100 : 4200;
+                const antiRoll = (
+                    left.compression - right.compression
+                ) * stiffness;
+
+                if (left.contact) {
+                    left.load = clamp(left.load + antiRoll, 0, 24000);
+                }
+
+                if (right.contact) {
+                    right.load = clamp(right.load - antiRoll, 0, 24000);
+                }
+            }
+        }
+
+        function tireResponse(kappa, alpha, material, capacity) {
+            const sx = kappa / 0.12;
+            const sy = Math.tan(clamp(alpha, -1.3, 1.3)) / 0.135;
+            const combined = Math.hypot(sx, sy);
+
+            if (combined < 0.000001) {
+                return [0, 0];
+            }
+
+            const bq = material.stiffness * combined;
+            const magnitude = capacity * Math.max(
+                0,
+                Math.sin(
+                    material.shape *
+                    Math.atan(bq - 0.35 * (bq - Math.atan(bq)))
+                )
+            );
+
+            return [
+                magnitude * sx / combined,
+                -magnitude * sy / combined
+            ];
+        }
+
+        function solveTires(dt, driveTorques) {
+            let sat = 0;
+            const microSteps = 8;
+            const subDt = dt / microSteps;
+
+            for (let index = 0; index < 4; index++) {
+                const wheel = wheels[index];
+                wheel.angle = wheel.front
+                    ? steeringAngleAt(car.steer, wheel.mount.x)
+                    : 0;
+
+                wheel.forward.set(
+                    Math.sin(wheel.angle),
+                    0,
+                    Math.cos(wheel.angle)
+                ).applyQuaternion(car.quaternion);
+
+                wheel.forward.addScaledVector(
+                    wheel.normal,
+                    -wheel.forward.dot(wheel.normal)
+                ).normalize();
+
+                wheel.left.crossVectors(wheel.normal, wheel.forward).normalize();
+
+                const brakeTorque =
+                    car.brake * (wheel.front ? 2000 : 1250) +
+                    (wheel.front ? 0 : car.handbrake * 4100);
+
+                let sumFx = 0;
+                let sumFy = 0;
+                let sumKappa = 0;
+                let longitudinal = 0;
+                let lateral = 0;
+                let capacity = 0;
+
+                if (wheel.contact && wheel.load > 0) {
+                    applyForce(
+                        wheel.normal.clone().multiplyScalar(wheel.load),
+                        wheel.point
+                    );
+
+                    const velocity = pointVelocity(wheel.point);
+                    longitudinal = velocity.dot(wheel.forward);
+                    lateral = velocity.dot(wheel.left);
+                    const targetAlpha = Math.atan2(
+                        lateral,
+                        Math.max(1.8, Math.abs(longitudinal))
+                    );
+                    const response = 1 - Math.exp(
+                        -Math.max(3.5, Math.abs(longitudinal)) /
+                        wheel.material.relaxation * dt
+                    );
+
+                    wheel.alpha = mix(wheel.alpha, targetAlpha, response);
+                    capacity = wheel.material.mu * wheel.load *
+                        Math.pow(Math.max(0.2, wheel.load / 3150), -0.085);
+                } else {
+                    wheel.alpha *= Math.exp(-dt * 15);
+                    wheel.lastMark = null;
+                }
+
+                /*
+                 * 輪速／縱向滑移採額外子步進，避免低速輪胎力
+                 * 與輪轉慣量的顯式耦合產生交替暴衝。
+                 * 煞車限制輪速而非直接扣除車速；沒有隱藏 ABS。
+                 */
+                for (let substep = 0; substep < microSteps; substep++) {
+                    let fx = 0;
+                    let fy = 0;
+                    let kappa = 0;
+
+                    if (capacity > 0) {
+                        const treadSpeed = wheel.omega * RADIUS;
+                        const denominator = Math.max(
+                            2.8,
+                            Math.abs(longitudinal),
+                            Math.abs(treadSpeed)
+                        );
+                        kappa = clamp(
+                            (treadSpeed - longitudinal) / denominator,
+                            -2,
+                            2
+                        );
+                        [fx, fy] = tireResponse(
+                            kappa,
+                            wheel.alpha,
+                            wheel.material,
+                            capacity
+                        );
+                    }
+
+                    const freeTorque =
+                        driveTorques[index] -
+                        fx * RADIUS -
+                        wheel.omega * 0.07;
+                    let omega = wheel.omega +
+                        freeTorque / WHEEL_INERTIA * subDt;
+                    const brakingDelta = brakeTorque / WHEEL_INERTIA * subDt;
+
+                    omega = moveToward(omega, 0, brakingDelta);
+                    wheel.omega = clamp(omega, -750, 750);
+                    sumFx += fx;
+                    sumFy += fy;
+                    sumKappa += kappa;
+                }
+
+                wheel.fx = sumFx / microSteps;
+                wheel.fy = sumFy / microSteps;
+                wheel.kappa = sumKappa / microSteps;
+                wheel.utilization = capacity > 0
+                    ? Math.hypot(wheel.fx, wheel.fy) / capacity
+                    : 0;
+                wheel.spin += wheel.omega * dt;
+
+                if (capacity > 0) {
+                    const rolling = -Math.tanh(longitudinal * 1.8) *
+                        wheel.material.rolling * wheel.load;
+                    const force = wheel.forward.clone()
+                        .multiplyScalar(wheel.fx + rolling)
+                        .addScaledVector(wheel.left, wheel.fy);
+                    applyForce(force, wheel.point);
+
+                    if (wheel.front) {
+                        const pneumaticTrail = 0.05 *
+                            Math.exp(-Math.abs(wheel.alpha) * 6);
+                        const mechanicalTrail = 0.024;
+                        sat -= wheel.fy * (pneumaticTrail + mechanicalTrail);
+                    }
+                }
+            }
+
+            car.sat = clamp(sat, -450, 450);
+        }
+
+        const chassisContacts = [];
+
+        for (const x of [-0.83, 0.83]) {
+            for (const z of [-1.74, 1.74]) {
+                chassisContacts.push(V(x, -0.255, z));
+            }
+
+            for (const z of [-0.88, 0.52]) {
+                chassisContacts.push(V(x * 0.87, 1.015, z));
+            }
+        }
+
+        function resolveContact(point, normal, penetration, friction, restitution) {
+            const velocity = pointVelocity(point);
+            const normalVelocity = velocity.dot(normal);
+            const separation = Math.min(1.5, Math.max(0, penetration - 0.008) * 22);
+            const normalImpulse = Math.max(
+                0,
+                (
+                    -normalVelocity * (
+                        normalVelocity < -1 ? 1 + restitution : 1
+                    ) +
+                    separation
+                ) / effectiveInverseMass(point, normal)
+            );
+
+            if (normalImpulse <= 0) {
+                return;
+            }
+
+            applyImpulse(normal.clone().multiplyScalar(normalImpulse), point);
+
+            const after = pointVelocity(point);
+            const tangent = after.clone().addScaledVector(
+                normal,
+                -after.dot(normal)
+            );
+            const tangentSpeed = tangent.length();
+
+            if (tangentSpeed > 0.0001) {
+                tangent.divideScalar(tangentSpeed);
+                const impulse = Math.min(
+                    normalImpulse * friction,
+                    tangentSpeed / effectiveInverseMass(point, tangent)
+                );
+                applyImpulse(tangent.multiplyScalar(-impulse), point);
+            }
+        }
+
+        function solveChassisCollisions() {
+            let deepest = 0;
+            let correctionNormal = UP;
+
+            for (const local of chassisContacts) {
+                const point = local.clone()
+                    .applyQuaternion(car.quaternion)
+                    .add(car.position);
+                const penetration = heightAt(point.x, point.z) + 0.025 - point.y;
+
+                if (penetration <= 0) {
+                    continue;
+                }
+
+                const normal = groundNormal(point.x, point.z);
+                resolveContact(point, normal, penetration, 0.55, 0.06);
+
+                if (penetration > deepest) {
+                    deepest = penetration;
+                    correctionNormal = normal;
+                }
+            }
+
+            if (deepest > 0.01) {
+                car.position.addScaledVector(
+                    correctionNormal,
+                    Math.min(0.06, (deepest - 0.01) * 0.12)
+                );
+            }
+
+            /*
+             * 以車身平面 OBB 對樹幹圓柱求最近點，
+             * 取代把整輛車縮成一個圓的碰撞方式。
+             */
+            const forward = V(0, 0, 1).applyQuaternion(car.quaternion);
+            forward.y = 0;
+
+            if (forward.lengthSq() < 0.01) {
+                return;
+            }
+
+            forward.normalize();
+            const left = new THREE.Vector3().crossVectors(UP, forward);
+
+            for (const tree of nearbyTrees) {
+                const dx = tree.x - car.position.x;
+                const dz = tree.z - car.position.z;
+
+                if (
+                    Math.abs(dx) > 3 ||
+                    Math.abs(dz) > 3 ||
+                    car.position.y - 0.35 > tree.y + tree.height ||
+                    car.position.y + 1 < tree.y
+                ) {
+                    continue;
+                }
+
+                const relative = V(dx, 0, dz);
+                const lx = relative.dot(left);
+                const lz = relative.dot(forward);
+                let cx = clamp(lx, -0.92, 0.92);
+                let cz = clamp(lz, -1.93, 1.93);
+                let nx = cx - lx;
+                let nz = cz - lz;
+                let distance = Math.hypot(nx, nz);
+                let penetration;
+
+                if (distance > tree.radius) {
+                    continue;
+                }
+
+                if (distance < 0.00001) {
+                    const sideGap = 0.92 - Math.abs(lx);
+                    const endGap = 1.93 - Math.abs(lz);
+
+                    if (sideGap < endGap) {
+                        nx = -(Math.sign(lx) || 1);
+                        nz = 0;
+                        cx = Math.sign(lx || 1) * 0.92;
+                        penetration = tree.radius + sideGap;
+                    } else {
+                        nx = 0;
+                        nz = -(Math.sign(lz) || 1);
+                        cz = Math.sign(lz || 1) * 1.93;
+                        penetration = tree.radius + endGap;
+                    }
+
+                    distance = 1;
+                } else {
+                    penetration = tree.radius - distance;
+                }
+
+                const normal = left.clone()
+                    .multiplyScalar(nx / distance)
+                    .addScaledVector(forward, nz / distance)
+                    .normalize();
+                const point = car.position.clone()
+                    .addScaledVector(left, cx)
+                    .addScaledVector(forward, cz);
+
+                point.y = clamp(
+                    car.position.y,
+                    tree.y + 0.1,
+                    tree.y + tree.height
+                );
+
+                resolveContact(point, normal, penetration, 0.48, 0.12);
+                car.position.addScaledVector(
+                    normal,
+                    Math.min(0.08, penetration * 0.18)
+                );
+            }
+        }
+
+        function savePreviousState() {
+            car.previousPosition.copy(car.position);
+            car.previousQuaternion.copy(car.quaternion);
+
+            for (const wheel of wheels) {
+                wheel.previousLength = wheel.length;
+                wheel.previousSpin = wheel.spin;
+                wheel.previousAngle = wheel.angle;
+            }
+        }
+
+        function updateCheckpoints(previousPosition) {
+            if (
+                previousPosition.z < nextGateZ &&
+                car.position.z >= nextGateZ
+            ) {
+                const dz = car.position.z - previousPosition.z;
+                const t = dz > 0
+                    ? (nextGateZ - previousPosition.z) / dz
+                    : 0;
+                const x = mix(previousPosition.x, car.position.x, t);
+                const y = mix(previousPosition.y, car.position.y, t);
+
+                if (
+                    Math.abs(roadOffset(x, nextGateZ)) <= 6.3 &&
+                    y - heightAt(x, nextGateZ) < 5
+                ) {
+                    checkpointCount++;
+                    const split = simulationTime - lastCheckpointTime;
+                    lastCheckpointTime = simulationTime;
+                    toast(`檢查點 ${checkpointCount} · 區間 ${split.toFixed(2)} 秒`);
+                } else {
+                    toast("未穿過檢查點範圍；繼續前往下一個檢查點。");
+                }
+
+                nextGateZ += 200;
+                positionGate();
+            }
+        }
+
+        function physicsStep(dt) {
+            savePreviousState();
+            car.inverseQuaternion.copy(car.quaternion).invert();
+            car.throttle = input.throttle;
+            car.brake = input.brake;
+            car.handbrake = input.handbrake;
+
+            updateSteering(dt);
+            const torques = drivetrain(dt);
+
+            car.force.set(0, -MASS * G, 0);
+            car.torque.set(0, 0, 0);
+
+            updateSuspension();
+            solveTires(dt, torques);
+
+            const speed = car.velocity.length();
+            applyForce(car.velocity.clone().multiplyScalar(-0.44 * speed));
+
+            const bodyVelocity = car.velocity.clone()
+                .applyQuaternion(car.inverseQuaternion);
+            const downforce = Math.min(3400, bodyVelocity.z ** 2 * 0.64);
+            applyForce(
+                V(0, -downforce, 0).applyQuaternion(car.quaternion)
+            );
+
+            const oldVelocity = car.velocity.clone();
+            car.velocity.addScaledVector(car.force, dt / MASS);
+            car.position.addScaledVector(car.velocity, dt);
+
+            const bodyOmega = car.angularVelocity.clone()
+                .applyQuaternion(car.inverseQuaternion);
+            const angularMomentum = bodyOmega.clone().multiply(INERTIA);
+            const gyro = new THREE.Vector3().crossVectors(
+                bodyOmega,
+                angularMomentum
+            );
+            const angularAcceleration = car.torque.clone()
+                .applyQuaternion(car.inverseQuaternion)
+                .sub(gyro)
+                .addScaledVector(bodyOmega, -1.6)
+                .multiply(INV_INERTIA)
+                .applyQuaternion(car.quaternion);
+
+            car.angularVelocity.addScaledVector(angularAcceleration, dt);
+            const angularSpeed = car.angularVelocity.length();
+
+            if (angularSpeed > 0.000001) {
+                car.quaternion.premultiply(
+                    new THREE.Quaternion().setFromAxisAngle(
+                        car.angularVelocity.clone().divideScalar(angularSpeed),
+                        angularSpeed * dt
+                    )
+                ).normalize();
+            }
+
+            car.inverseQuaternion.copy(car.quaternion).invert();
+            solveChassisCollisions();
+
+            const measuredG = car.velocity.clone()
+                .sub(oldVelocity)
+                .divideScalar(dt)
+                .addScaledVector(UP, G)
+                .applyQuaternion(car.inverseQuaternion)
+                .divideScalar(G);
+
+            car.specificG.lerp(measuredG, 1 - Math.exp(-dt * 22));
+
+            const localVelocity = car.velocity.clone()
+                .applyQuaternion(car.inverseQuaternion);
+            car.slip = car.velocity.length() > 1.5
+                ? Math.atan2(localVelocity.x, Math.abs(localVelocity.z))
+                : 0;
+
+            car.distance += car.position.distanceTo(car.previousPosition);
+            simulationTime += dt;
+            updateCheckpoints(car.previousPosition);
+
+            const finite =
+                car.position.toArray().every(Number.isFinite) &&
+                car.velocity.toArray().every(Number.isFinite) &&
+                car.angularVelocity.toArray().every(Number.isFinite) &&
+                car.quaternion.toArray().every(Number.isFinite);
+
+            if (!finite || car.position.y < -150) {
+                resetCar(false);
+                toast("偵測到無效物理狀態，已將車輛重置回道路。");
+            }
+        }
+
+        let started = false;
+        let userPaused = false;
+        let settingsOpen = false;
+        let contextLost = false;
+        let cameraMode = 0;
+        let cameraInitialized = false;
+        let toastUntil = 0;
+        let accumulator = 0;
+        let audio = null;
+
+        const keys = new Set();
+        let keyboardSteer = 0;
+        let keyboardGas = 0;
+        let keyboardBrake = 0;
+
+        function isRunning() {
+            return started &&
+                !userPaused &&
+                !settingsOpen &&
+                !contextLost &&
+                !document.hidden;
+        }
+
+        function toast(message) {
+            $("toast").textContent = message;
+            $("toast").style.opacity = "1";
+            toastUntil = performance.now() + 3400;
+        }
+
+        function clearControls() {
+            keys.clear();
+            keyboardSteer = 0;
+            keyboardGas = 0;
+            keyboardBrake = 0;
+            input.steer = 0;
+            input.throttle = 0;
+            input.brake = 0;
+            input.handbrake = 0;
+            input.activeSteer = false;
+            input.analog = false;
+            input.wheel = false;
+        }
+
+        function synchronizePrevious() {
+            savePreviousState();
+            accumulator = 0;
+        }
+
+        function updatePauseUI() {
+            $("pause").style.display =
+                started && userPaused && !settingsOpen ? "block" : "none";
+            $("pauseButton").textContent = userPaused ? "繼續 P" : "暫停 P";
+        }
+
+        function setPaused(value) {
+            userPaused = value;
+            clearControls();
+            synchronizePrevious();
+            stopRumble();
+            updatePauseUI();
+
+            if (!value && audio) {
+                audio.resume();
+            }
+        }
+
+        function togglePause() {
+            if (started && !settingsOpen && !contextLost) {
+                setPaused(!userPaused);
+            }
+        }
+
+        function switchCamera() {
+            cameraMode = (cameraMode + 1) % 3;
+            cameraInitialized = false;
+            toast(["慣性追尾視角", "駕駛艙視角", "低位追車視角"][cameraMode]);
+        }
+
+        function resetCar(restart = false) {
+            const oldZ = Number.isFinite(car.position.z)
+                ? car.position.z
+                : 5;
+            const z = restart ? 5 : oldZ;
+            const x = roadX(z);
+            const normal = groundNormal(x, z);
+            const forward = V(Math.sin(roadHeading(z)), 0, Math.cos(roadHeading(z)));
+            forward.addScaledVector(normal, -forward.dot(normal)).normalize();
+            const left = new THREE.Vector3().crossVectors(normal, forward).normalize();
+            const basis = new THREE.Matrix4().makeBasis(left, normal, forward);
+
+            car.position.set(x, heightAt(x, z), z);
+            car.position.addScaledVector(normal, 0.82);
+            car.quaternion.setFromRotationMatrix(basis).normalize();
+            car.inverseQuaternion.copy(car.quaternion).invert();
+            car.velocity.set(0, 0, 0);
+            car.angularVelocity.set(0, 0, 0);
+            car.force.set(0, 0, 0);
+            car.torque.set(0, 0, 0);
+            car.steer = 0;
+            car.steerVelocity = 0;
+            car.sat = 0;
+            car.engineOmega = 105;
+            car.rpm = 1000;
+            car.gear = 1;
+            car.shiftTime = 0;
+            car.throttle = 0;
+            car.brake = 0;
+            car.handbrake = 0;
+            car.slip = 0;
+            car.specificG.set(0, 1, 0);
+
+            for (const wheel of wheels) {
+                wheel.omega = 0;
+                wheel.spin = 0;
+                wheel.angle = 0;
+                wheel.kappa = 0;
+                wheel.alpha = 0;
+                wheel.fx = 0;
+                wheel.fy = 0;
+                wheel.load = 0;
+                wheel.utilization = 0;
+                wheel.contact = false;
+                wheel.length = REST_LENGTH;
+                wheel.compression = 0;
+                wheel.lastMark = null;
+                wheel.emission = 0;
+            }
+
+            if (restart) {
+                simulationTime = 0;
+                car.distance = 0;
+                checkpointCount = 0;
+                lastCheckpointTime = 0;
+                nextGateZ = 200;
+                traceHistory.length = 0;
+                lastTraceTime = -1;
+                clearEffects();
+            } else if (z >= nextGateZ) {
+                nextGateZ = (Math.floor(z / 200) + 1) * 200;
+            }
+
+            clearControls();
+            synchronizePrevious();
+            cameraInitialized = false;
+            positionGate();
+            updateTerrain();
+        }
+
+        function reverseGear() {
+            if (car.velocity.length() > 1.4) {
+                toast("切換前進／倒車前，請將車速降至 5 km/h 以下。");
+                return;
+            }
+
+            if (requestGear(car.gear === -1 ? 1 : -1)) {
+                toast(car.gear === -1 ? "倒車檔：油門控制後退。" : "已切換前進檔。");
+            }
+        }
+
+        function manualShift(direction) {
+            if (requestGear(car.gear + direction)) {
+                car.automatic = false;
+            }
+        }
+
+        const handledKeys = new Set([
+            "KeyW", "KeyA", "KeyS", "KeyD",
+            "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+            "Space", "KeyQ", "KeyE", "KeyX", "KeyM",
+            "KeyC", "KeyT", "KeyR", "KeyP", "Escape"
+        ]);
+
+        addEventListener("keydown", (event) => {
+            if (
+                event.target instanceof HTMLInputElement ||
+                event.target instanceof HTMLSelectElement ||
+                event.target instanceof HTMLTextAreaElement
+            ) {
+                return;
+            }
+
+            if (started && handledKeys.has(event.code)) {
+                event.preventDefault();
+            }
+
+            if (!started || settingsOpen) {
+                return;
+            }
+
+            if (!event.repeat) {
+                if (event.code === "KeyP" || event.code === "Escape") {
+                    togglePause();
+                    return;
+                }
+
+                if (event.code === "KeyC") {
+                    switchCamera();
+                }
+
+                if (event.code === "KeyT") {
+                    $("telemetry").classList.toggle("hidden");
+                }
+            }
+
+            if (!isRunning()) {
+                return;
+            }
+
+            keys.add(event.code);
+
+            if (event.repeat) {
+                return;
+            }
+
+            if (event.code === "KeyR") {
+                resetCar(false);
+                toast("已依道路坡度扶正車輛；練習時間不重置。");
+            }
+
+            if (event.code === "KeyQ") {
+                manualShift(-1);
+            }
+
+            if (event.code === "KeyE") {
+                manualShift(1);
+            }
+
+            if (event.code === "KeyX") {
+                reverseGear();
+            }
+
+            if (event.code === "KeyM") {
+                car.automatic = !car.automatic;
+                toast(car.automatic ? "自動換檔" : "手動換檔 Q／E；自動離合器");
+            }
+        });
+
+        addEventListener("keyup", (event) => {
+            keys.delete(event.code);
+        });
+
+        addEventListener("blur", () => {
+            clearControls();
+
+            if (started) {
+                setPaused(true);
+            }
+        });
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden && started) {
+                setPaused(true);
+            }
+        });
+
+        let pads = [];
+        let currentPad = null;
+        let lastPadIdentity = "";
+        let lastPadButtons = [];
+        let padListSignature = "";
+        let padActiveUntil = 0;
+        let lastRumbleTime = 0;
+        let rumbleAvailable = true;
+
+        function getPads() {
+            try {
+                return navigator.getGamepads
+                    ? Array.from(navigator.getGamepads()).filter(
+                        (pad) => pad && pad.connected
+                    )
+                    : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function analogAxis(raw) {
+            const value = Number.isFinite(raw) ? raw : 0;
+            const magnitude = Math.abs(value);
+
+            if (magnitude <= config.deadzone) {
+                return 0;
+            }
+
+            return Math.sign(value) * clamp(
+                (magnitude - config.deadzone) /
+                (1 - config.deadzone) * config.gain,
+                0,
+                1
+            );
+        }
+
+        function readPedal(pad, axis) {
+            const value = pad.axes[axis];
+
+            if (!Number.isFinite(value)) {
+                return 0;
+            }
+
+            if (config.pedal === "zero") {
+                return clamp(value, 0, 1);
+            }
+
+            return config.pedal === "positive"
+                ? clamp((value + 1) * 0.5, 0, 1)
+                : clamp((1 - value) * 0.5, 0, 1);
+        }
+
+        function refreshPadList() {
+            const signature = pads.map(
+                (pad) => `${pad.index}:${pad.id}`
+            ).join("|");
+
+            if (signature === padListSignature) {
+                return;
+            }
+
+            padListSignature = signature;
+            const select = $("padSetting");
+            select.replaceChildren();
+
+            const automatic = document.createElement("option");
+            automatic.value = "-1";
+            automatic.textContent = "自動選擇";
+            select.append(automatic);
+
+            for (const pad of pads) {
+                const option = document.createElement("option");
+                option.value = String(pad.index);
+                option.textContent = `${pad.index} · ${pad.id}`;
+                select.append(option);
+            }
+
+            if (
+                config.padIndex !== -1 &&
+                !pads.some((pad) => pad.index === config.padIndex)
+            ) {
+                config.padIndex = -1;
+            }
+
+            select.value = String(config.padIndex);
+        }
+
+        function pollInput(dt, now) {
+            pads = getPads();
+            refreshPadList();
+
+            const previousPad = currentPad;
+            currentPad = config.padIndex >= 0
+                ? pads.find((pad) => pad.index === config.padIndex) || null
+                : pads.find((pad) => pad.mapping === "standard") || pads[0] || null;
+
+            if (
+                previousPad &&
+                !currentPad &&
+                input.analog &&
+                started
+            ) {
+                setPaused(true);
+                toast("輸入裝置已斷線，已自動暫停。");
+            }
+
+            const left = keys.has("KeyA") || keys.has("ArrowLeft");
+            const right = keys.has("KeyD") || keys.has("ArrowRight");
+            const gas = keys.has("KeyW") || keys.has("ArrowUp");
+            const brake = keys.has("KeyS") || keys.has("ArrowDown");
+            const keyboardActive = left || right || gas || brake || keys.has("Space");
+
+            if (isRunning()) {
+                const steerTarget = keyboardAxis(left, right);
+
+                keyboardSteer = moveToward(
+                    keyboardSteer,
+                    steerTarget,
+                    dt * config.keyRate * (steerTarget === 0 ? 1.45 : 1)
+                );
+                keyboardGas = moveToward(
+                    keyboardGas,
+                    gas ? 1 : 0,
+                    dt * (gas ? 2.8 : 5)
+                );
+                keyboardBrake = moveToward(
+                    keyboardBrake,
+                    brake ? 1 : 0,
+                    dt * 5.5
+                );
+
+                input.steer = keyboardSteer;
+                input.throttle = keyboardGas;
+                input.brake = keyboardBrake;
+                input.handbrake = keys.has("Space") ? 1 : 0;
+                input.activeSteer = steerTarget !== 0;
+                input.analog = false;
+                input.wheel = false;
+                input.name = "KEYBOARD";
+            }
+
+            if (!currentPad) {
+                lastPadButtons = [];
+                lastPadIdentity = "";
+
+                if (config.device === "gamepad" || config.device === "wheel") {
+                    input.steer = 0;
+                    input.throttle = 0;
+                    input.brake = 0;
+                    input.handbrake = 0;
+                    input.name = "NO DEVICE";
+                }
+
+                if (settingsOpen) {
+                    $("deviceInfo").textContent = "尚未偵測到裝置。";
+                }
+                return;
+            }
+
+            const pad = currentPad;
+            const identity = `${pad.index}:${pad.id}`;
+
+            if (identity !== lastPadIdentity) {
+                lastPadIdentity = identity;
+                lastPadButtons = pad.buttons.map((button) => button.pressed);
+                rumbleAvailable = true;
+            }
+
+            const value = (index) => clamp(pad.buttons[index]?.value || 0, 0, 1);
+            const pressed = (index) => !!pad.buttons[index]?.pressed;
+            const rising = (index) => pressed(index) && !lastPadButtons[index];
+            const standard = pad.mapping === "standard";
+
+            const activity =
+                Math.abs(pad.axes[0] || 0) > config.deadzone + 0.06 ||
+                value(6) > 0.06 ||
+                value(7) > 0.06 ||
+                pad.buttons.some((button) => button.pressed);
+
+            if (activity && standard) {
+                padActiveUntil = now + 2200;
+            }
+
+            const usePad =
+                config.device === "wheel" ||
+                config.device === "gamepad" ||
+                (
+                    config.device === "auto" &&
+                    standard &&
+                    now < padActiveUntil &&
+                    !keyboardActive
+                );
+
+            if (usePad && isRunning()) {
+                input.analog = true;
+                input.wheel = config.device === "wheel";
+                input.name = input.wheel ? "WHEEL" : "GAMEPAD";
+
+                if (input.wheel) {
+                    input.steer = analogAxis(
+                        deviceAxis(pad.axes[config.steerAxis] || 0, config.invert)
+                    );
+                    input.throttle = readPedal(pad, config.gasAxis);
+                    input.brake = readPedal(pad, config.brakeAxis);
+                    input.handbrake = keys.has("Space") ? 1 : 0;
+                } else {
+                    input.steer = analogAxis(deviceAxis(pad.axes[0] || 0));
+                    input.throttle = value(7);
+                    input.brake = value(6);
+                    input.handbrake = value(0);
+                }
+
+                input.activeSteer = Math.abs(input.steer) > 0.005;
+            }
+
+            if (
+                usePad &&
+                config.device !== "wheel" &&
+                started &&
+                !settingsOpen
+            ) {
+                if (rising(9)) {
+                    togglePause();
+                }
+
+                if (rising(1)) {
+                    switchCamera();
+                }
+
+                if (isRunning()) {
+                    if (rising(2)) {
+                        manualShift(-1);
+                    }
+
+                    if (rising(3)) {
+                        manualShift(1);
+                    }
+                }
+            }
+
+            lastPadButtons = pad.buttons.map((button) => button.pressed);
+
+            if (settingsOpen) {
+                const mappingWarning = standard
+                    ? "標準手把映射"
+                    : "非標準映射，建議使用自訂軸模式";
+                $("deviceInfo").textContent =
+                    `${pad.id}｜${mappingWarning}｜` +
+                    `${pad.axes.length} 軸／${pad.buttons.length} 鍵。` +
+                    `軸值：${pad.axes.map((axis) => axis.toFixed(2)).join("，")}`;
+            }
+        }
+
+        function stopRumble() {
+            const actuator = currentPad?.vibrationActuator;
+
+            try {
+                const promise = actuator?.reset?.();
+                promise?.catch?.(() => {});
+            } catch {
+                // 無震動介面的裝置仍可操作。
+            }
+        }
+
+        function updateRumble(now) {
+            if (
+                !isRunning() ||
+                !config.rumble ||
+                !input.analog ||
+                input.wheel ||
+                !rumbleAvailable ||
+                now - lastRumbleTime < 150
+            ) {
+                return;
+            }
+
+            const actuator = currentPad?.vibrationActuator;
+
+            if (!actuator?.playEffect) {
+                return;
+            }
+
+            lastRumbleTime = now;
+            const slip = wheels.reduce(
+                (sum, wheel) => sum + (
+                    wheel.contact
+                        ? Math.abs(wheel.kappa) + Math.abs(wheel.alpha)
+                        : 0
+                ),
+                0
+            ) / 4;
+            const impact = clamp(Math.abs(car.specificG.y - 1) * 0.18, 0, 0.7);
+
+            try {
+                actuator.playEffect("dual-rumble", {
+                    duration: 170,
+                    startDelay: 0,
+                    weakMagnitude: clamp(slip * 0.8, 0, 0.8),
+                    strongMagnitude: clamp(slip * 0.2 + impact, 0, 0.85)
+                }).catch(() => {
+                    rumbleAvailable = false;
+                });
+            } catch {
+                rumbleAvailable = false;
+            }
+        }
+
+        const PARTICLE_COUNT = 1000;
+        const particlePositions = new Float32Array(PARTICLE_COUNT * 3);
+        const particleColors = new Float32Array(PARTICLE_COUNT * 3);
+        const particleData = Array.from({ length: PARTICLE_COUNT }, () => ({
+            life: 0,
+            velocity: V(),
+            gravity: 0
+        }));
+        particlePositions.fill(-10000);
+
+        const particleCanvas = document.createElement("canvas");
+        particleCanvas.width = 64;
+        particleCanvas.height = 64;
+        const particleContext = particleCanvas.getContext("2d");
+        const gradient = particleContext.createRadialGradient(32, 32, 2, 32, 32, 31);
+        gradient.addColorStop(0, "rgba(255,255,255,0.8)");
+        gradient.addColorStop(0.45, "rgba(255,255,255,0.4)");
+        gradient.addColorStop(1, "rgba(255,255,255,0)");
+        particleContext.fillStyle = gradient;
+        particleContext.fillRect(0, 0, 64, 64);
+
+        const particleTexture = new THREE.CanvasTexture(particleCanvas);
+        const particleGeometry = new THREE.BufferGeometry();
+        particleGeometry.setAttribute(
+            "position",
+            new THREE.BufferAttribute(particlePositions, 3)
+                .setUsage(THREE.DynamicDrawUsage)
+        );
+        particleGeometry.setAttribute(
+            "color",
+            new THREE.BufferAttribute(particleColors, 3)
+                .setUsage(THREE.DynamicDrawUsage)
+        );
+        const particleMaterial = new THREE.PointsMaterial({
+            map: particleTexture,
+            size: 0.48,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.52,
+            depthWrite: false,
+            sizeAttenuation: true
+        });
+        const particles = new THREE.Points(particleGeometry, particleMaterial);
+        particles.frustumCulled = false;
+        scene.add(particles);
+
+        const MARK_COUNT = 2800;
+        const markPositions = new Float32Array(MARK_COUNT * 6);
+        const markGeometry = new THREE.BufferGeometry();
+        markGeometry.setAttribute(
+            "position",
+            new THREE.BufferAttribute(markPositions, 3)
+                .setUsage(THREE.DynamicDrawUsage)
+        );
+        markGeometry.setDrawRange(0, 0);
+        const marks = new THREE.LineSegments(
+            markGeometry,
+            new THREE.LineBasicMaterial({
+                color: "#352c22",
+                transparent: true,
+                opacity: 0.52,
+                depthWrite: false
+            })
+        );
+        marks.frustumCulled = false;
+        scene.add(marks);
+
+        let particleCursor = 0;
+        let markCursor = 0;
+        let marksUsed = 0;
+
+        function clearEffects() {
+            for (const data of particleData) {
+                data.life = 0;
+            }
+
+            particlePositions.fill(-10000);
+            particleGeometry.attributes.position.needsUpdate = true;
+            marksUsed = 0;
+            markCursor = 0;
+            markGeometry.setDrawRange(0, 0);
+
+            for (const wheel of wheels) {
+                wheel.lastMark = null;
+            }
+        }
+
+        function emitParticle(wheel, slip) {
+            const index = particleCursor++ % PARTICLE_COUNT;
+            const data = particleData[index];
+            const offset = index * 3;
+            const mud = wheel.material === materials.mud;
+            data.life = mud ? 0.7 : 1.4 + Math.random() * 0.8;
+            data.gravity = mud ? 7.5 : 0.8;
+            data.velocity.copy(car.velocity).multiplyScalar(0.16);
+            data.velocity.addScaledVector(
+                wheel.forward,
+                -Math.sign(wheel.omega || 1) * (1.5 + slip * 4)
+            );
+            data.velocity.x += (Math.random() - 0.5) * 2.2;
+            data.velocity.y += 1.2 + Math.random() * 2;
+            data.velocity.z += (Math.random() - 0.5) * 2.2;
+
+            particlePositions[offset] = wheel.point.x;
+            particlePositions[offset + 1] = wheel.point.y + 0.1;
+            particlePositions[offset + 2] = wheel.point.z;
+
+            const shade = 0.82 + Math.random() * 0.3;
+            particleColors[offset] = wheel.material.dust.r * shade;
+            particleColors[offset + 1] = wheel.material.dust.g * shade;
+            particleColors[offset + 2] = wheel.material.dust.b * shade;
+        }
+
+        function addMark(wheel) {
+            const point = wheel.point.clone().addScaledVector(wheel.normal, 0.026);
+
+            if (wheel.lastMark) {
+                const distance = point.distanceTo(wheel.lastMark);
+
+                if (distance < 0.15) {
+                    return;
+                }
+
+                if (distance < 2.8) {
+                    const offset = (markCursor++ % MARK_COUNT) * 6;
+                    wheel.lastMark.toArray(markPositions, offset);
+                    point.toArray(markPositions, offset + 3);
+                    marksUsed = Math.min(MARK_COUNT, marksUsed + 1);
+                }
+            }
+
+            wheel.lastMark = point;
+        }
+
+        function updateEffects(dt) {
+            for (const wheel of wheels) {
+                const slip = Math.max(
+                    Math.abs(wheel.kappa),
+                    Math.abs(wheel.alpha) * 1.5
+                );
+                const groundSpeed = car.velocity.length();
+                const treadSpeed = Math.abs(wheel.omega * RADIUS);
+                const movement = Math.max(groundSpeed, treadSpeed);
+
+                if (wheel.contact && wheel.load > 100 && movement > 1) {
+                    const loose = wheel.material !== materials.asphalt;
+                    const rate = loose
+                        ? clamp(movement * 1.4 + slip * 50, 0, 85)
+                        : clamp((slip - 0.14) * 100, 0, 40);
+
+                    wheel.emission += dt * rate;
+
+                    while (wheel.emission >= 1) {
+                        emitParticle(wheel, slip);
+                        wheel.emission--;
+                    }
+
+                    if (slip > 0.13 && groundSpeed > 1.5) {
+                        addMark(wheel);
+                    } else {
+                        wheel.lastMark = null;
+                    }
+                } else {
+                    wheel.lastMark = null;
+                }
+            }
+
+            for (let index = 0; index < PARTICLE_COUNT; index++) {
+                const data = particleData[index];
+
+                if (data.life <= 0) {
+                    continue;
+                }
+
+                const offset = index * 3;
+                data.life -= dt;
+
+                if (data.life <= 0) {
+                    particlePositions[offset + 1] = -10000;
+                    continue;
+                }
+
+                data.velocity.y -= data.gravity * dt;
+                data.velocity.multiplyScalar(Math.exp(-dt * 0.65));
+
+                particlePositions[offset] += data.velocity.x * dt;
+                particlePositions[offset + 1] += data.velocity.y * dt;
+                particlePositions[offset + 2] += data.velocity.z * dt;
+
+                const floor = heightAt(
+                    particlePositions[offset],
+                    particlePositions[offset + 2]
+                ) + 0.04;
+
+                if (particlePositions[offset + 1] < floor) {
+                    particlePositions[offset + 1] = floor;
+                    data.velocity.y = Math.abs(data.velocity.y) * 0.17;
+                    data.velocity.x *= 0.8;
+                    data.velocity.z *= 0.8;
+                }
+            }
+
+            particleGeometry.attributes.position.needsUpdate = true;
+            particleGeometry.attributes.color.needsUpdate = true;
+            markGeometry.attributes.position.needsUpdate = true;
+            markGeometry.setDrawRange(0, marksUsed * 2);
+        }
+
+        class EngineAudio {
+            constructor() {
+                const Context = window.AudioContext || window.webkitAudioContext;
+                this.context = new Context();
+                this.master = this.context.createGain();
+                this.master.gain.value = 0;
+
+                this.compressor = this.context.createDynamicsCompressor();
+                this.compressor.threshold.value = -13;
+                this.compressor.ratio.value = 5;
+                this.master.connect(this.compressor);
+                this.compressor.connect(this.context.destination);
+
+                this.engineFilter = this.context.createBiquadFilter();
+                this.engineFilter.type = "lowpass";
+                this.engineFilter.Q.value = 0.7;
+                this.engineFilter.connect(this.master);
+
+                this.engineGain = this.context.createGain();
+                this.engineGain.gain.value = 0;
+                this.engineGain.connect(this.engineFilter);
+
+                this.engine = this.context.createOscillator();
+                this.engine.type = "sawtooth";
+                this.engine.connect(this.engineGain);
+                this.engine.start();
+
+                this.harmonic = this.context.createOscillator();
+                this.harmonic.type = "triangle";
+                this.harmonicGain = this.context.createGain();
+                this.harmonicGain.gain.value = 0.018;
+                this.harmonic.connect(this.harmonicGain);
+                this.harmonicGain.connect(this.engineFilter);
+                this.harmonic.start();
+
+                this.noiseBuffer = this.context.createBuffer(
+                    1,
+                    this.context.sampleRate * 2,
+                    this.context.sampleRate
+                );
+                const samples = this.noiseBuffer.getChannelData(0);
+
+                for (let index = 0; index < samples.length; index++) {
+                    samples[index] = Math.random() * 2 - 1;
+                }
+
+                this.noise = this.context.createBufferSource();
+                this.noise.buffer = this.noiseBuffer;
+                this.noise.loop = true;
+
+                this.tireFilter = this.context.createBiquadFilter();
+                this.tireFilter.type = "bandpass";
+                this.tireGain = this.context.createGain();
+                this.tireGain.gain.value = 0;
+                this.noise.connect(this.tireFilter);
+                this.tireFilter.connect(this.tireGain);
+                this.tireGain.connect(this.master);
+                this.noise.start();
+
+                this.lastThrottle = 0;
+                this.burstTimes = new Map();
+            }
+
+            resume() {
+                this.context.resume().catch(() => {});
+            }
+
+            burst(type, strength = 1) {
+                const now = this.context.currentTime;
+                const last = this.burstTimes.get(type) || -1;
+
+                if (now - last < 0.08) {
+                    return;
+                }
+
+                this.burstTimes.set(type, now);
+                const source = this.context.createBufferSource();
+                const filter = this.context.createBiquadFilter();
+                const gain = this.context.createGain();
+                const duration = type === "air" ? 0.25 : 0.1;
+                source.buffer = this.noiseBuffer;
+
+                filter.type = type === "air" ? "highpass" : "bandpass";
+                filter.frequency.value = type === "air"
+                    ? 1900
+                    : type === "stone" ? 2500 : 145;
+                filter.Q.value = type === "stone" ? 7 : 0.75;
+                gain.gain.setValueAtTime(
+                    (type === "pop" ? 0.3 : 0.11) * strength,
+                    now
+                );
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+                source.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.master);
+                source.start(now, Math.random());
+                source.stop(now + duration);
+                source.onended = () => {
+                    source.disconnect();
+                    filter.disconnect();
+                    gain.disconnect();
+                };
+            }
+
+            update(dt, running) {
+                const now = this.context.currentTime;
+                this.master.gain.setTargetAtTime(
+                    running ? config.volume : 0,
+                    now,
+                    0.06
+                );
+
+                if (!running) {
+                    this.lastThrottle = car.throttle;
+                    return;
+                }
+
+                const limiter = car.rpm > 7050
+                    ? 0.35 + 0.65 * Math.max(0, Math.sin(now * 95))
+                    : 1;
+
+                this.engine.frequency.setTargetAtTime(car.rpm / 30, now, 0.025);
+                this.harmonic.frequency.setTargetAtTime(car.rpm / 15.1, now, 0.035);
+                this.engineGain.gain.setTargetAtTime(
+                    (0.035 + car.throttle * 0.06) * limiter,
+                    now,
+                    0.025
+                );
+                this.engineFilter.frequency.setTargetAtTime(
+                    430 + car.rpm * 0.2 + car.throttle * 1100,
+                    now,
+                    0.04
+                );
+
+                const slip = wheels.reduce(
+                    (sum, wheel) => sum + (
+                        wheel.contact
+                            ? Math.abs(wheel.alpha) + Math.abs(wheel.kappa) * 0.6
+                            : 0
+                    ),
+                    0
+                ) / 4;
+                const speed = car.velocity.length();
+                const material = materialAt(car.position.x, car.position.z);
+                const asphalt = material === materials.asphalt;
+                const grounded = wheels.some((wheel) => wheel.contact && wheel.load > 0);
+
+                this.tireFilter.frequency.setTargetAtTime(
+                    asphalt ? 1300 + slip * 850 : 400 + speed * 13,
+                    now,
+                    0.06
+                );
+                this.tireFilter.Q.setTargetAtTime(asphalt ? 2.5 : 0.7, now, 0.1);
+                this.tireGain.gain.setTargetAtTime(
+                    clamp(slip * (asphalt ? 0.19 : 0.14), 0, 0.19) *
+                    smoothstep(0.5, 5, speed),
+                    now,
+                    0.04
+                );
+
+                if (this.lastThrottle - car.throttle > 0.13 && car.rpm > 3600) {
+                    this.burst("air", 0.8);
+                }
+
+                if (
+                    grounded &&
+                    material === materials.gravel &&
+                    speed > 7 &&
+                    Math.random() < dt * Math.min(6, speed * 0.13)
+                ) {
+                    this.burst("stone", clamp(speed / 40, 0.15, 0.7));
+                }
+
+                this.lastThrottle = car.throttle;
+            }
+
+            dispose() {
+                this.context.close().catch(() => {});
+            }
+        }
+
+        const renderedPosition = V();
+        const renderedQuaternion = new THREE.Quaternion();
+        const cameraPosition = V();
+        const cameraVelocity = V();
+        const cameraLook = V();
+        const cameraUp = V(0, 1, 0);
+        const filteredG = V(0, 1, 0);
+        let headAngle = 0;
+
+        function updateVisual(alpha) {
+            renderedPosition.lerpVectors(
+                car.previousPosition,
+                car.position,
+                alpha
+            );
+            renderedQuaternion.slerpQuaternions(
+                car.previousQuaternion,
+                car.quaternion,
+                alpha
+            );
+            carVisual.position.copy(renderedPosition);
+            carVisual.quaternion.copy(renderedQuaternion);
+
+            for (const wheel of wheels) {
+                const visual = wheel.visual;
+                visual.pivot.position.copy(wheel.mount);
+                visual.pivot.position.y -= mix(
+                    wheel.previousLength,
+                    wheel.length,
+                    alpha
+                );
+                visual.pivot.rotation.y = mix(
+                    wheel.previousAngle,
+                    wheel.angle,
+                    alpha
+                );
+                visual.rotating.rotation.x = mix(
+                    wheel.previousSpin,
+                    wheel.spin,
+                    alpha
+                );
+            }
+
+            steeringWheel.rotation.z = -car.steer * 12.2;
+            brakeLightMaterial.emissiveIntensity =
+                0.16 + car.brake * 2.7 + car.handbrake * 1.3;
+        }
+
+        function updateCamera(dt) {
+            filteredG.lerp(car.specificG, 1 - Math.exp(-dt * 8));
+
+            const forward = V(0, 0, 1).applyQuaternion(renderedQuaternion);
+            const planarForward = forward.clone();
+            planarForward.y = 0;
+
+            if (planarForward.lengthSq() < 0.001) {
+                planarForward.set(0, 0, 1);
+            } else {
+                planarForward.normalize();
+            }
+
+            let targetFov;
+
+            if (cameraMode === 1) {
+                const head = V(
+                    0.39 - clamp(filteredG.x, -1.5, 1.5) * 0.021,
+                    0.745 - clamp(filteredG.z, -1.5, 1.5) * 0.012,
+                    -0.06
+                ).applyQuaternion(renderedQuaternion).add(renderedPosition);
+
+                headAngle = mix(
+                    headAngle,
+                    clamp(car.steer * 0.3 + car.slip * 0.36, -0.48, 0.48),
+                    1 - Math.exp(-dt * 5)
+                );
+                const gaze = V(
+                    Math.sin(headAngle),
+                    -0.035,
+                    Math.cos(headAngle)
+                ).applyQuaternion(renderedQuaternion);
+
+                cameraPosition.copy(head);
+                cameraLook.copy(head).addScaledVector(gaze, 20);
+                cameraUp.set(0, 1, 0).applyQuaternion(renderedQuaternion);
+                targetFov = 77;
+            } else {
+                const low = cameraMode === 2;
+                const direction = planarForward.clone();
+                const velocityDirection = car.velocity.clone();
+                velocityDirection.y = 0;
+
+                if (velocityDirection.length() > 3) {
+                    velocityDirection.normalize();
+
+                    if (velocityDirection.dot(direction) > 0) {
+                        direction.lerp(velocityDirection, 0.16).normalize();
+                    }
+                }
+
+                const targetPosition = renderedPosition.clone()
+                    .addScaledVector(direction, low ? -6.2 : -8.4)
+                    .add(V(0, low ? 1.75 : 3.5, 0));
+
+                targetPosition.y = Math.max(
+                    targetPosition.y,
+                    heightAt(targetPosition.x, targetPosition.z) + 0.7
+                );
+
+                if (!cameraInitialized) {
+                    cameraPosition.copy(targetPosition);
+                    cameraVelocity.set(0, 0, 0);
+                }
+
+                const spring = low ? 64 : 45;
+                const damping = 2 * Math.sqrt(spring);
+                const steps = Math.max(1, Math.ceil(dt / 0.016));
+                const subDt = dt / steps;
+
+                for (let step = 0; step < steps; step++) {
+                    const acceleration = targetPosition.clone()
+                        .sub(cameraPosition)
+                        .multiplyScalar(spring)
+                        .addScaledVector(cameraVelocity, -damping);
+                    cameraVelocity.addScaledVector(acceleration, subDt);
+                    cameraPosition.addScaledVector(cameraVelocity, subDt);
+                }
+
+                const floor = heightAt(cameraPosition.x, cameraPosition.z) + 0.45;
+
+                if (cameraPosition.y < floor) {
+                    cameraPosition.y = floor;
+                    cameraVelocity.y = Math.max(0, cameraVelocity.y);
+                }
+
+                const targetLook = renderedPosition.clone()
+                    .addScaledVector(planarForward, 3)
+                    .add(V(0, 0.6, 0));
+
+                if (!cameraInitialized) {
+                    cameraLook.copy(targetLook);
+                } else {
+                    cameraLook.lerp(targetLook, 1 - Math.exp(-dt * 9));
+                }
+
+                cameraUp.lerp(UP, 1 - Math.exp(-dt * 7)).normalize();
+                targetFov = 62 + clamp(car.velocity.length() * 0.13, 0, 8);
+            }
+
+            cameraInitialized = true;
+            camera.position.copy(cameraPosition);
+            camera.up.copy(cameraUp);
+            camera.lookAt(cameraLook);
+
+            const newFov = mix(camera.fov, targetFov, 1 - Math.exp(-dt * 5));
+
+            if (Math.abs(camera.fov - newFov) > 0.001) {
+                camera.fov = newFov;
+                camera.updateProjectionMatrix();
+            }
+
+            sun.position.copy(renderedPosition).add(V(-38, 65, 28));
+            sun.target.position.copy(renderedPosition);
+        }
+
+        const wheelUI = wheels.map((wheel) => {
+            const wrapper = document.createElement("div");
+            const heading = document.createElement("div");
+            heading.className = "wheel-head";
+            const name = document.createElement("span");
+            name.textContent = wheel.label;
+            const rpm = document.createElement("span");
+            rpm.className = "mono";
+            heading.append(name, rpm);
+
+            const bar = document.createElement("div");
+            bar.className = "bar";
+            const fill = document.createElement("i");
+            bar.append(fill);
+
+            const data = document.createElement("div");
+            data.className = "wheel-data";
+            const travel = document.createElement("div");
+            travel.className = "wheel-data";
+            wrapper.append(heading, bar, data, travel);
+            $("wheels").append(wrapper);
+
+            return { rpm, fill, data, travel };
+        });
+
+        const lights = Array.from({ length: 12 }, () => {
+            const lamp = document.createElement("i");
+            $("lights").append(lamp);
+            return lamp;
+        });
+
+        const gContext = $("g").getContext("2d");
+        const mapContext = $("map").getContext("2d");
+        const traceContext = $("trace").getContext("2d");
+        const traceHistory = [];
+        let lastTraceTime = -1;
+        let fps = 60;
+        let simulationRatio = 1;
+
+        function drawG() {
+            const ctx = gContext;
+            const center = 112;
+            const radius = 89;
+            ctx.clearRect(0, 0, 224, 224);
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = "#425a63";
+
+            for (const scale of [0.5, 1]) {
+                ctx.beginPath();
+                ctx.arc(center, center, radius * scale, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = "#344a53";
+            ctx.beginPath();
+            ctx.moveTo(center, 12);
+            ctx.lineTo(center, 212);
+            ctx.moveTo(12, center);
+            ctx.lineTo(212, center);
+            ctx.stroke();
+
+            ctx.fillStyle = "#91a7ae";
+            ctx.font = "14px Consolas";
+            ctx.fillText("1G", 166, 105);
+
+            const x = center - clamp(filteredG.x, -1.5, 1.5) / 1.5 * radius;
+            const y = center - clamp(filteredG.z, -1.5, 1.5) / 1.5 * radius;
+
+            ctx.strokeStyle = "#a6f4cf66";
+            ctx.beginPath();
+            ctx.moveTo(center, center);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            ctx.fillStyle = "#a6f4cf";
+            ctx.shadowColor = "#a6f4cf";
+            ctx.shadowBlur = 13;
+            ctx.beginPath();
+            ctx.arc(x, y, 7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        function drawTrace() {
+            if (simulationTime - lastTraceTime >= 0.05) {
+                traceHistory.push({
+                    time: simulationTime,
+                    beta: car.slip * DEG,
+                    steer: car.steer * DEG
+                });
+                lastTraceTime = simulationTime;
+            }
+
+            while (
+                traceHistory.length > 0 &&
+                traceHistory[0].time < simulationTime - 6
+            ) {
+                traceHistory.shift();
+            }
+
+            const ctx = traceContext;
+            ctx.clearRect(0, 0, 520, 136);
+            ctx.strokeStyle = "#344b54";
+            ctx.lineWidth = 1;
+
+            for (const y of [20, 68, 116]) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(520, y);
+                ctx.stroke();
+            }
+
+            for (const [key, color] of [
+                ["beta", "#ff7545"],
+                ["steer", "#a6f4cf"]
+            ]) {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                traceHistory.forEach((sample, index) => {
+                    const x = (
+                        sample.time - (simulationTime - 6)
+                    ) / 6 * 520;
+                    const y = 68 - clamp(sample[key], -60, 60) / 60 * 58;
+
+                    if (index === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+
+                ctx.stroke();
+            }
+        }
+
+        function drawMap() {
+            const ctx = mapContext;
+            const width = 376;
+            const height = 360;
+            const scale = 1.6;
+            const originX = width / 2;
+            const originY = 258;
+            const forward = V(0, 0, 1).applyQuaternion(car.quaternion);
+            forward.y = 0;
+            forward.normalize();
+            const left = new THREE.Vector3().crossVectors(UP, forward);
+
+            const project = (x, z) => {
+                const dx = x - car.position.x;
+                const dz = z - car.position.z;
+                return [
+                    originX - (dx * left.x + dz * left.z) * scale,
+                    originY - (dx * forward.x + dz * forward.z) * scale
+                ];
+            };
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = "#14252d";
+            ctx.fillRect(0, 0, width, height);
+            ctx.strokeStyle = "#29424c";
+            ctx.lineWidth = 1;
+
+            for (let x = 0; x < width; x += 40) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+
+            for (let y = 0; y < height; y += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.strokeStyle = "#87938c";
+            ctx.lineWidth = 12 * scale;
+            ctx.beginPath();
+
+            for (let offset = -220; offset <= 260; offset += 4) {
+                const z = car.position.z + offset;
+                const [x, y] = project(roadX(z), z);
+
+                if (offset === -220) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+
+            ctx.stroke();
+            const [gateX, gateY] = project(roadX(nextGateZ), nextGateZ);
+            ctx.fillStyle = "#ff7545";
+            ctx.beginPath();
+            ctx.arc(gateX, gateY, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#a6f4cf";
+            ctx.strokeStyle = "#112229";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(originX, originY - 13);
+            ctx.lineTo(originX - 8, originY + 10);
+            ctx.lineTo(originX, originY + 6);
+            ctx.lineTo(originX + 8, originY + 10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            const headingChange = wrapAngle(
+                roadHeading(car.position.z + 75) -
+                roadHeading(car.position.z + 15)
+            ) * DEG;
+
+            $("pace").textContent = Math.abs(headingChange) < 4
+                ? "直線 / 緩彎"
+                : `${headingChange > 0 ? "左彎" : "右彎"} ${
+                    Math.abs(headingChange) > 15 ? "收緊" : "中速"
+                }`;
+        }
+
+        function updateHUD() {
+            const minutes = Math.floor(simulationTime / 60);
+            const seconds = Math.floor(simulationTime % 60);
+            const milliseconds = Math.floor((simulationTime % 1) * 1000);
+            $("time").textContent =
+                `${String(minutes).padStart(2, "0")}:` +
+                `${String(seconds).padStart(2, "0")}.` +
+                `${String(milliseconds).padStart(3, "0")}`;
+
+            $("speed").textContent = Math.round(car.velocity.length() * 3.6);
+            $("rpm").textContent = Math.round(car.rpm / 10 * 1) * 10;
+            $("gear").textContent = car.gear === -1 ? "R" : car.gear === 0 ? "N" : car.gear;
+            $("surface").textContent = materialAt(car.position.x, car.position.z).name;
+            $("distance").textContent = `${(car.distance / 1000).toFixed(2)} km`;
+            $("inputName").textContent = input.name;
+            $("beta").textContent = `${(car.slip * DEG).toFixed(1)}°`;
+            $("gText").textContent =
+                `L ${filteredG.x.toFixed(2)} / F ${filteredG.z.toFixed(2)} G`;
+            $("sat").textContent = `${car.sat.toFixed(1)} Nm`;
+
+            const steerDegrees = Math.abs(car.steer * DEG);
+            $("steerText").textContent = steerDegrees < 0.1
+                ? "置中"
+                : `${car.steer > 0 ? "← 左" : "右 →"} ${steerDegrees.toFixed(1)}°`;
+            $("steerDot").style.left =
+                `${50 - car.steer / MAX_STEER * 47}%`;
+
+            const rear = Math.round(config.rearBias * 100);
+            $("drive").textContent =
+                `${car.automatic ? "AUTO" : "MAN"} · ` +
+                `${rear === 100 ? "RWD" : "AWD"} ${100 - rear}:${rear}`;
+            $("performance").textContent =
+                `${Math.round(fps)} FPS · ${simulationRatio.toFixed(2)}×`;
+            $("physicsRate").textContent = simulationRatio < 0.9
+                ? "240 Hz · 慢速模擬"
+                : "240 Hz";
+            $("checkpoints").textContent = checkpointCount;
+            $("nextGate").textContent =
+                `${Math.max(0, Math.round(nextGateZ - car.position.z))} m`;
+
+            $("gasBar").style.width = `${car.throttle * 100}%`;
+            $("brakeBar").style.width = `${car.brake * 100}%`;
+            $("handBar").style.width = `${car.handbrake * 100}%`;
+
+            const lit = clamp((car.rpm - 2500) / 4600 * 12, 0, 12);
+
+            lights.forEach((lamp, index) => {
+                let color = "#34454c";
+
+                if (index < lit) {
+                    color = index < 7
+                        ? "#a6f4cf"
+                        : index < 10 ? "#f3d47b" : "#ff7545";
+                }
+
+                if (
+                    car.rpm > 7000 &&
+                    Math.sin(performance.now() * 0.025) < 0
+                ) {
+                    color = "#34454c";
+                }
+
+                lamp.style.background = color;
+            });
+
+            wheels.forEach((wheel, index) => {
+                const ui = wheelUI[index];
+                ui.rpm.textContent = `${Math.round(wheel.omega * 60 / (2 * Math.PI))} rpm`;
+                ui.fill.style.width = `${clamp(wheel.utilization, 0, 1) * 100}%`;
+                ui.fill.style.background =
+                    Math.abs(wheel.kappa) > 0.22 || Math.abs(wheel.alpha) > 0.19
+                        ? "#ff7545"
+                        : wheel.utilization > 0.88 ? "#f3d47b" : "#a6f4cf";
+
+                ui.data.textContent = wheel.contact && wheel.load > 0
+                    ? `${Math.round(wheel.load)} N · κ ${(wheel.kappa * 100).toFixed(0)}%`
+                    : "AIR / 無有效負載";
+                ui.travel.textContent =
+                    `行程 ${(wheel.compression * 1000).toFixed(0)} mm`;
+            });
+
+            if (!$("telemetry").classList.contains("hidden")) {
+                drawG();
+                drawTrace();
+            }
+
+            drawMap();
+        }
+
+        function bind(id, property, type = "number") {
+            $(id).addEventListener("input", (event) => {
+                const element = event.target;
+
+                if (type === "boolean") {
+                    config[property] = element.checked;
+                } else if (type === "string") {
+                    config[property] = element.value;
+                } else {
+                    const value = Number(element.value);
+
+                    if (!Number.isFinite(value)) {
+                        return;
+                    }
+
+                    config[property] = property.endsWith("Axis")
+                        ? clamp(Math.trunc(value), 0, 31)
+                        : value;
+                }
+
+                if (property === "surface") {
+                    clearEffects();
+                    updateTerrain(true);
+                }
+
+                if (property === "quality") {
+                    applyQuality();
+                }
+
+                if (property === "device" || property === "padIndex") {
+                    clearControls();
+                    stopRumble();
+                    lastPadIdentity = "";
+                }
+
+                if (property === "rumble" && !config.rumble) {
+                    stopRumble();
+                }
+            });
+        }
+
+        bind("surfaceSetting", "surface", "string");
+        bind("deviceSetting", "device", "string");
+        bind("padSetting", "padIndex");
+        bind("keyRateSetting", "keyRate");
+        bind("deadzoneSetting", "deadzone");
+        bind("gainSetting", "gain");
+        bind("rearSetting", "rearBias");
+        bind("steerAxisSetting", "steerAxis");
+        bind("gasAxisSetting", "gasAxis");
+        bind("brakeAxisSetting", "brakeAxis");
+        bind("pedalSetting", "pedal", "string");
+        bind("invertSetting", "invert", "boolean");
+        bind("rumbleSetting", "rumble", "boolean");
+        bind("volumeSetting", "volume");
+        bind("qualitySetting", "quality", "string");
+
+        $("settingsButton").addEventListener("click", () => {
+            settingsOpen = true;
+            clearControls();
+            synchronizePrevious();
+            stopRumble();
+            $("settings").style.display = "flex";
+            updatePauseUI();
+        });
+
+        $("closeSettings").addEventListener("click", () => {
+            settingsOpen = false;
+            clearControls();
+            synchronizePrevious();
+            $("settings").style.display = "none";
+            updatePauseUI();
+            audio?.resume();
+        });
+
+        $("restartButton").addEventListener("click", () => {
+            resetCar(true);
+            toast("已重新開始練習：時間、距離、檢查點與痕跡已清除。");
+        });
+
+        $("cameraButton").addEventListener("click", switchCamera);
+        $("pauseButton").addEventListener("click", togglePause);
+
+        $("resetButton").addEventListener("click", () => {
+            resetCar(false);
+            toast("已依道路坡度扶正並返回道路中央。");
+        });
+
+        $("startButton").addEventListener("click", async () => {
+            $("startButton").disabled = true;
+
+            try {
+                audio = new EngineAudio();
+                await audio.context.resume();
+            } catch {
+                audio = null;
+                toast("音效未能啟用，仍可正常駕駛。");
+            }
+
+            started = true;
+            userPaused = false;
+            clearControls();
+            synchronizePrevious();
+            $("intro").style.display = "none";
+            updatePauseUI();
+            toast("A／← 左轉，D／→ 右轉。先以低速確認轉向，再練習反胎。");
+        });
+
+        /*
+         * 啟動時的局部回歸檢查。
+         * 只檢查座標／公式不變量，不冒充瀏覽器實機整合測試。
+         */
+        function runSelfTests() {
+            const results = [];
+            const test = (name, condition) => {
+                results.push({ name, passed: !!condition });
+            };
+
+            test("左鍵為正轉向", keyboardAxis(true, false) === 1);
+            test("右鍵為負轉向", keyboardAxis(false, true) === -1);
+            test("同時按左右為零", keyboardAxis(true, true) === 0);
+            test("手把右軸轉為右轉", deviceAxis(1) === -1);
+            test("手把左軸轉為左轉", deviceAxis(-1) === 1);
+            test("FL 位於車體左側", wheels[0].mount.x > 0);
+            test("FR 位於車體右側", wheels[1].mount.x < 0);
+            test(
+                "左彎內輪角較大",
+                steeringAngleAt(0.3, TRACK_HALF) >
+                steeringAngleAt(0.3, -TRACK_HALF)
+            );
+            test(
+                "右彎內輪角較大",
+                Math.abs(steeringAngleAt(-0.3, -TRACK_HALF)) >
+                Math.abs(steeringAngleAt(-0.3, TRACK_HALF))
+            );
+
+            const [fxPositive, fyPositive] = tireResponse(
+                0.1,
+                0.1,
+                materials.gravel,
+                3000
+            );
+            const [fxNegative, fyNegative] = tireResponse(
+                -0.1,
+                -0.1,
+                materials.gravel,
+                3000
+            );
+
+            test("驅動滑移產生前向力", fxPositive > 0);
+            test("橫向力抵抗側滑", fyPositive < 0);
+            test("輪胎模型符號對稱", Math.abs(fxPositive + fxNegative) < 0.001);
+            test("側向力符號對稱", Math.abs(fyPositive + fyNegative) < 0.001);
+            test(
+                "摩擦合力不超出上限",
+                Math.hypot(fxPositive, fyPositive) <= 3000.001
+            );
+
+            const failed = results.filter((result) => !result.passed);
+            $("selfTest").textContent = failed.length === 0
+                ? `啟動公式檢查：${results.length}/${results.length} 通過。此結果不涵蓋實機操控、FFB 或所有碰撞情境。`
+                : `公式檢查失敗：${failed.map((result) => result.name).join("、")}`;
+
+            if (failed.length > 0) {
+                throw new Error("座標／物理公式回歸檢查失敗");
+            }
+        }
+
+        addEventListener("resize", () => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        });
+
+        $("world").addEventListener("webglcontextlost", (event) => {
+            event.preventDefault();
+            contextLost = true;
+            setPaused(true);
+            toast("WebGL 環境中斷，等待恢復。若長時間無法恢復，請重新整理。");
+        });
+
+        $("world").addEventListener("webglcontextrestored", () => {
+            contextLost = false;
+            applyQuality();
+            cameraInitialized = false;
+            toast("WebGL 已恢復。按 P 繼續駕駛。");
+        });
+
+        addEventListener("pagehide", (event) => {
+            stopRumble();
+
+            if (event.persisted) {
+                setPaused(true);
+                return;
+            }
+
+            audio?.dispose();
+        });
+
+        let previousFrame = performance.now();
+        let hudClock = 0;
+        let statsClock = 0;
+        let statsFrames = 0;
+        let statsSimulated = 0;
+        let statsRunningTime = 0;
+        let lastSlowWarning = 0;
+
+        function frame(now) {
+            requestAnimationFrame(frame);
+
+            const elapsed = Math.max(0, (now - previousFrame) / 1000);
+            previousFrame = now;
+            const renderDt = Math.min(elapsed, 0.08);
+
+            pollInput(Math.min(elapsed, 0.05), now);
+            const running = isRunning();
+            let simulated = 0;
+
+            if (running) {
+                accumulator += Math.min(elapsed, 0.15);
+                let steps = 0;
+
+                while (accumulator >= DT && steps < MAX_STEPS) {
+                    physicsStep(DT);
+                    accumulator -= DT;
+                    simulated += DT;
+                    steps++;
+                }
+
+                if (accumulator >= DT) {
+                    accumulator %= DT;
+
+                    if (now - lastSlowWarning > 10000) {
+                        lastSlowWarning = now;
+                        toast("目前效能不足，模擬正在減速。可在設定中降低畫面品質。");
+                    }
+                }
+
+                updateEffects(simulated);
+                updateTerrain();
+            } else {
+                accumulator = 0;
+            }
+
+            const alpha = running ? clamp(accumulator / DT, 0, 1) : 1;
+            updateVisual(alpha);
+
+            if (running || !started || !cameraInitialized) {
+                updateCamera(Math.max(0.001, renderDt));
+            }
+
+            audio?.update(renderDt, running);
+            updateRumble(now);
+
+            statsClock += elapsed;
+            statsFrames++;
+
+            if (running) {
+                statsSimulated += simulated;
+                statsRunningTime += elapsed;
+            }
+
+            if (statsClock >= 0.75) {
+                fps = statsFrames / Math.max(0.001, statsClock);
+                simulationRatio = statsRunningTime > 0
+                    ? clamp(statsSimulated / statsRunningTime, 0, 1)
+                    : 1;
+                statsClock = 0;
+                statsFrames = 0;
+                statsSimulated = 0;
+                statsRunningTime = 0;
+            }
+
+            hudClock += elapsed;
+
+            if (hudClock >= 0.05) {
+                hudClock = 0;
+                updateHUD();
+            }
+
+            if (now > toastUntil) {
+                $("toast").style.opacity = "0";
+            }
+
+            if (!contextLost) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        try {
+            runSelfTests();
+            resetCar(true);
+            applyQuality();
+            updateVisual(1);
+            updateCamera(1 / 60);
+            updateHUD();
+
+            $("loadStatus").textContent =
+                "引擎就緒 · 240 Hz 剛體物理 · 輪胎旋轉額外子步進";
+            $("startButton").disabled = false;
+            requestAnimationFrame(frame);
+        } catch (error) {
+            $("loadStatus").textContent =
+                `初始化失敗：${error.message}。請查看瀏覽器主控台。`;
+            console.error(error);
+        }
+    </script>
+</body>
+</html>
