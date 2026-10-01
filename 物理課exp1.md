@@ -32,12 +32,14 @@
 
 ## 3. 連接 Arduino
 
-- 連接方式：USB 連接電腦。
-- 目的：`（待填，例如把 Arduino 做成方向盤／控制器來操控賽車遊戲）`
-- 注意：遊戲只支援可被 Gamepad API 辨識的裝置。Arduino 要讓電腦當成遊戲手把，才能直接操控遊戲（例如用 Leonardo／Micro 這類可模擬 USB HID 的板子）。
-- 使用的感測器／元件：`（待填）`
-- 接線方式：`（待填）`
-- Arduino 程式：`（待填，之後可放進本 repo）`
+- 使用板子：Arduino Uno，透過 USB 連接電腦（COM3）。
+- 目的：用 Arduino 模擬鍵盤操控賽車遊戲。搖桿取代 WASD，按鈕取代其他按鍵（手煞車、換檔、視角、暫停等）。
+- 做法：Uno 不能直接模擬 USB 鍵盤，所以 Uno 透過 Serial 傳出「按下／放開」訊息，再由電腦上的 Python 程式 `serial_to_keys.py` 代按鍵盤。
+- 使用的元件：搖桿模組 ×1、按鈕 ×8、麵包板、杜邦線。
+- 接線方式與按鍵對應：見 [`arduino/README.md`](arduino/README.md)。
+- Arduino 程式：
+  - Uno 版：[`arduino/racing_serial_uno/`](arduino/racing_serial_uno/)
+  - Leonardo 版（可直接當 USB 鍵盤）：[`arduino/racing_keyboard/`](arduino/racing_keyboard/)
 
 ## 4. 建立四人共用的 GitHub
 
@@ -55,6 +57,10 @@
 
 ```
 arduino_gwcl-/
+├── arduino/
+│   ├── README.md                 # 接線與使用說明
+│   ├── racing_serial_uno/        # Uno 版程式 + serial_to_keys.py
+│   └── racing_keyboard/          # Leonardo 版程式
 ├── car-racing-1/
 │   └── index.html      # 賽車遊戲（RALLY / RAW 2）
 └── 物理課exp1.md        # 本紀錄
