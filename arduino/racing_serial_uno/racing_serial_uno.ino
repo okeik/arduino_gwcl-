@@ -1,22 +1,28 @@
 /*
  * 賽車遊戲控制器（RALLY / RAW 2）— Arduino Uno 版
- * Uno 不能直接模擬 USB 鍵盤，所以改成：
- *   Uno 透過 Serial 送出「按下 / 放開」訊息 → 電腦上的 serial_to_keys.py 代按鍵盤。
  *
- * 訊息格式（每行一個）：+w 代表按下 W，-w 代表放開 W；空白鍵寫成 sp。
+ * 輸入（Arduino → 電腦）：搖桿取代 WASD、一顆按鈕當手煞車（Space），其他功能維持用鍵盤。
+ * 輸出（電腦 → Arduino）：風扇轉速隨車速變化模擬吹風；通過檢查點時紅燈亮 1 秒。
+ *
+ * Uno 不能直接模擬 USB 鍵盤，所以電腦要執行 serial_to_keys.py 當橋樑：
+ *   Arduino 送出：+w 按下 W、-w 放開 W；空白鍵寫成 sp
+ *   電腦送來  ：S<車速 km/h>，例如 S87；C 代表通過檢查點
  *
  * 接線：
- *   搖桿模組  VCC → 5V、GND → GND、VRx → A0、VRy → A1、SW → D10（手煞車 Space）
- *   按鈕      一腳接腳位、另一腳接 GND（使用內建上拉電阻，不需外加電阻）
- *             D2 → Q 降檔      D3 → E 升檔      D4 → X 倒車檔
- *             D5 → M 自排/手排  D6 → C 切換視角  D7 → T 遙測面板
- *             D8 → R 扶正車輛   D9 → P 暫停
+ *   搖桿模組  VCC → 5V、GND → GND、VRx → A0、VRy → A1（SW 不用接）
+ *   手煞車按鈕 一腳 → D2、另一腳 → GND（使用內建上拉電阻）
+ *   風扇      D5（PWM）→ 1kΩ → 電晶體基極，詳見 README
+ *   紅燈 LED  D12 → 220Ω → LED 長腳，LED 短腳 → GND
  */
 
-// ---------- 搖桿設定 ----------
+// ---------- 腳位 ----------
 const int JOY_X_PIN = A0;
 const int JOY_Y_PIN = A1;
+const int HANDBRAKE_PIN = 2;
+const int FAN_PIN = 5;   // 必須是 PWM 腳位（3、5、6、9、10、11）
+const int LED_PIN = 12;
 
+// ---------- 搖桿設定 ----------
 // 搖桿推離中心超過這個值才算按下（0~512），太敏感就調大
 const int DEAD_ZONE = 200;
 
@@ -24,62 +30,93 @@ const int DEAD_ZONE = 200;
 const bool INVERT_X = false;  // true：左右對調
 const bool INVERT_Y = false;  // true：前後對調
 
-// ---------- 按鈕設定 ----------
-struct Button {
-  uint8_t pin;
-  const char *key;
-  bool pressed;          // 目前送出的狀態
-  bool lastReading;      // 上一次讀到的狀態
-  unsigned long changedAt;
-};
+// ---------- 風扇設定 ----------
+const int FAN_START_SPEED = 5;     // 車速低於這個值（km/h）風扇停止
+const int FAN_FULL_SPEED = 150;    // 車速達到這個值（km/h）風扇全速
+const int FAN_MIN_PWM = 80;        // 風扇能轉起來的最低 PWM，轉不動就調大
+const unsigned long FAN_TIMEOUT_MS = 1000;  // 超過這麼久沒收到車速就關風扇
 
-Button buttons[] = {
-  {10, "sp", false, false, 0},  // 搖桿 SW：手煞車
-  {2,  "q",  false, false, 0},  // 降檔
-  {3,  "e",  false, false, 0},  // 升檔
-  {4,  "x",  false, false, 0},  // 倒車檔
-  {5,  "m",  false, false, 0},  // 自排/手排
-  {6,  "c",  false, false, 0},  // 切換視角
-  {7,  "t",  false, false, 0},  // 遙測面板
-  {8,  "r",  false, false, 0},  // 扶正車輛
-  {9,  "p",  false, false, 0},  // 暫停
-};
-const int BUTTON_COUNT = sizeof(buttons) / sizeof(buttons[0]);
-const unsigned long DEBOUNCE_MS = 20;
+// ---------- 紅燈設定 ----------
+const unsigned long LED_ON_MS = 1000;
 
-// ---------- 搖桿方向對應的按鍵 ----------
-struct Direction {
-  const char *key;
+// ---------- 按鍵狀態 ----------
+struct Key {
+  const char *name;
   bool pressed;
 };
 
-Direction dirUp    = {"w", false};  // 油門
-Direction dirDown  = {"s", false};  // 煞車/倒車
-Direction dirLeft  = {"a", false};  // 左轉
-Direction dirRight = {"d", false};  // 右轉
+Key keyUp        = {"w", false};   // 油門
+Key keyDown      = {"s", false};   // 煞車/倒車
+Key keyLeft      = {"a", false};   // 左轉
+Key keyRight     = {"d", false};   // 右轉
+Key keyHandbrake = {"sp", false};  // 手煞車
 
 int centerX = 512;
 int centerY = 512;
 
-void sendKey(const char *key, bool press) {
-  Serial.print(press ? '+' : '-');
-  Serial.println(key);
-}
+bool handbrakeLastReading = false;
+unsigned long handbrakeChangedAt = 0;
+const unsigned long DEBOUNCE_MS = 20;
 
-void setKey(Direction &dir, bool shouldPress) {
-  if (shouldPress == dir.pressed) {
+unsigned long lastSpeedAt = 0;
+unsigned long ledOnAt = 0;
+bool ledOn = false;
+
+char rxBuffer[16];
+int rxLength = 0;
+
+void setKey(Key &key, bool shouldPress) {
+  if (shouldPress == key.pressed) {
     return;
   }
-  sendKey(dir.key, shouldPress);
-  dir.pressed = shouldPress;
+  Serial.print(shouldPress ? '+' : '-');
+  Serial.println(key.name);
+  key.pressed = shouldPress;
+}
+
+void setFanSpeed(int speedKmh) {
+  int pwm = 0;
+  if (speedKmh >= FAN_START_SPEED) {
+    pwm = map(constrain(speedKmh, FAN_START_SPEED, FAN_FULL_SPEED),
+              FAN_START_SPEED, FAN_FULL_SPEED, FAN_MIN_PWM, 255);
+  }
+  analogWrite(FAN_PIN, pwm);
+}
+
+void handleCommand(const char *cmd) {
+  if (cmd[0] == 'S') {
+    setFanSpeed(atoi(cmd + 1));
+    lastSpeedAt = millis();
+  } else if (cmd[0] == 'C') {
+    digitalWrite(LED_PIN, HIGH);
+    ledOn = true;
+    ledOnAt = millis();
+  }
+}
+
+void readSerial() {
+  while (Serial.available() > 0) {
+    char c = Serial.read();
+    if (c == '\n' || c == '\r') {
+      if (rxLength > 0) {
+        rxBuffer[rxLength] = '\0';
+        handleCommand(rxBuffer);
+        rxLength = 0;
+      }
+    } else if (rxLength < (int)sizeof(rxBuffer) - 1) {
+      rxBuffer[rxLength++] = c;
+    }
+  }
 }
 
 void setup() {
   Serial.begin(115200);
 
-  for (int i = 0; i < BUTTON_COUNT; i++) {
-    pinMode(buttons[i].pin, INPUT_PULLUP);
-  }
+  pinMode(HANDBRAKE_PIN, INPUT_PULLUP);
+  pinMode(FAN_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
+  analogWrite(FAN_PIN, 0);
+  digitalWrite(LED_PIN, LOW);
 
   // 開機時搖桿不要碰，用來校正中心點
   delay(500);
@@ -95,6 +132,8 @@ void setup() {
 }
 
 void loop() {
+  unsigned long now = millis();
+
   // 搖桿 → WASD
   int dx = analogRead(JOY_X_PIN) - centerX;
   int dy = analogRead(JOY_Y_PIN) - centerY;
@@ -102,26 +141,33 @@ void loop() {
   if (INVERT_Y) dy = -dy;
 
   // 多數搖桿模組往前推時 VRy 變小，所以 dy < 0 代表往前
-  setKey(dirUp,    dy < -DEAD_ZONE);
-  setKey(dirDown,  dy >  DEAD_ZONE);
-  setKey(dirLeft,  dx < -DEAD_ZONE);
-  setKey(dirRight, dx >  DEAD_ZONE);
+  setKey(keyUp,    dy < -DEAD_ZONE);
+  setKey(keyDown,  dy >  DEAD_ZONE);
+  setKey(keyLeft,  dx < -DEAD_ZONE);
+  setKey(keyRight, dx >  DEAD_ZONE);
 
-  // 按鈕 → 其他按鍵（按下時腳位為 LOW）
-  unsigned long now = millis();
-  for (int i = 0; i < BUTTON_COUNT; i++) {
-    Button &b = buttons[i];
-    bool reading = digitalRead(b.pin) == LOW;
+  // 手煞車按鈕（按下時腳位為 LOW）
+  bool reading = digitalRead(HANDBRAKE_PIN) == LOW;
+  if (reading != handbrakeLastReading) {
+    handbrakeLastReading = reading;
+    handbrakeChangedAt = now;
+  }
+  if (now - handbrakeChangedAt >= DEBOUNCE_MS) {
+    setKey(keyHandbrake, reading);
+  }
 
-    if (reading != b.lastReading) {
-      b.lastReading = reading;
-      b.changedAt = now;
-    }
+  // 接收車速與檢查點
+  readSerial();
 
-    if (now - b.changedAt >= DEBOUNCE_MS && reading != b.pressed) {
-      sendKey(b.key, reading);
-      b.pressed = reading;
-    }
+  // 太久沒收到車速（遊戲關掉或橋接程式停止）就關風扇
+  if (now - lastSpeedAt > FAN_TIMEOUT_MS) {
+    analogWrite(FAN_PIN, 0);
+  }
+
+  // 紅燈亮 1 秒後熄滅
+  if (ledOn && now - ledOnAt >= LED_ON_MS) {
+    digitalWrite(LED_PIN, LOW);
+    ledOn = false;
   }
 
   delay(5);

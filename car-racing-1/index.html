@@ -1606,6 +1606,17 @@
             box(gateVisual, orangeMaterial, [0.72, 0.2, 0.07], [side * 6.2, 2.8, 0]);
         }
 
+        // Arduino 橋接：把車速與檢查點送給電腦上執行的 serial_to_keys.py，
+        // 再轉給 Arduino（風扇模擬吹風、紅燈提示通過檢查點）。
+        // 沒有執行橋接程式時連線會失敗，改成每 3 秒才重試一次。
+        const arduinoBridge = {
+            url: "http://localhost:8000/telemetry",
+            checkpoint: false,
+            lastSent: 0,
+            retryAfter: 0,
+            busy: false
+        };
+
         let nextGateZ = 200;
         let checkpointCount = 0;
         let lastCheckpointTime = 0;
@@ -2286,6 +2297,7 @@
                     y - heightAt(x, nextGateZ) < 5
                 ) {
                     checkpointCount++;
+                    arduinoBridge.checkpoint = true;
                     const split = simulationTime - lastCheckpointTime;
                     lastCheckpointTime = simulationTime;
                     toast(`檢查點 ${checkpointCount} · 區間 ${split.toFixed(2)} 秒`);
@@ -4018,6 +4030,30 @@
             audio?.dispose();
         });
 
+        function sendArduinoTelemetry(now) {
+            if (
+                arduinoBridge.busy ||
+                now < arduinoBridge.retryAfter ||
+                now - arduinoBridge.lastSent < 100
+            ) {
+                return;
+            }
+
+            const speed = isRunning() ? Math.round(car.velocity.length() * 3.6) : 0;
+            const checkpoint = arduinoBridge.checkpoint ? 1 : 0;
+            arduinoBridge.checkpoint = false;
+            arduinoBridge.lastSent = now;
+            arduinoBridge.busy = true;
+
+            fetch(`${arduinoBridge.url}?speed=${speed}&cp=${checkpoint}`, { cache: "no-store" })
+                .catch(() => {
+                    arduinoBridge.retryAfter = performance.now() + 3000;
+                })
+                .finally(() => {
+                    arduinoBridge.busy = false;
+                });
+        }
+
         let previousFrame = performance.now();
         let hudClock = 0;
         let statsClock = 0;
@@ -4032,6 +4068,7 @@
             const elapsed = Math.max(0, (now - previousFrame) / 1000);
             previousFrame = now;
             const renderDt = Math.min(elapsed, 0.08);
+            sendArduinoTelemetry(now);
 
             pollInput(Math.min(elapsed, 0.05), now);
             const running = isRunning();

@@ -12,14 +12,14 @@
 
 - 從 Arduino 官網（<https://www.arduino.cc/en/software>）下載 Arduino IDE 並安裝。
 - 版本：`（待填）`
-- 使用的板子型號：`（待填，例如 Arduino Leonardo / Uno）`
+- 使用的板子型號：Arduino Uno
 
 ## 2. 賽車遊戲
 
 - 遊戲名稱：**RALLY / RAW 2 — 拉力動力學實驗場**
-- 線上網址：<https://jack72299947229994-stack.github.io/car-racing-1/>
-- 原始碼：<https://github.com/jack72299947229994-stack/car-racing-1>
-- 本 repo 中的副本：[`car-racing-1/index.html`](car-racing-1/index.html)
+- 我們發布的網址（GitHub Pages）：<https://okeik.github.io/arduino_gwcl-/car-racing-1/>
+- 原作者：<https://github.com/jack72299947229994-stack/car-racing-1>
+- 本 repo 中的程式：[`car-racing-1/index.html`](car-racing-1/index.html)（已加上傳送車速、檢查點給 Arduino 的功能）
 
 遊戲特色（依程式內容整理）：
 
@@ -33,13 +33,16 @@
 ## 3. 連接 Arduino
 
 - 使用板子：Arduino Uno，透過 USB 連接電腦（COM3）。
-- 目的：用 Arduino 模擬鍵盤操控賽車遊戲。搖桿取代 WASD，按鈕取代其他按鍵（手煞車、換檔、視角、暫停等）。
-- 做法：Uno 不能直接模擬 USB 鍵盤，所以 Uno 透過 Serial 傳出「按下／放開」訊息，再由電腦上的 Python 程式 `serial_to_keys.py` 代按鍵盤。
-- 使用的元件：搖桿模組 ×1、按鈕 ×8、麵包板、杜邦線。
-- 接線方式與按鍵對應：見 [`arduino/README.md`](arduino/README.md)。
-- Arduino 程式：
-  - Uno 版：[`arduino/racing_serial_uno/`](arduino/racing_serial_uno/)
-  - Leonardo 版（可直接當 USB 鍵盤）：[`arduino/racing_keyboard/`](arduino/racing_keyboard/)
+- 輸入：搖桿取代 WASD，一顆按鈕當手煞車（Space）；其他功能維持用電腦鍵盤。
+- 輸出：
+  - 風扇轉速隨遊戲車速變化，模擬吹風的感覺（5 km/h 以下停止，150 km/h 全速）。
+  - 通過檢查點時紅燈亮 1 秒。
+- 做法：Uno 不能直接模擬 USB 鍵盤，所以電腦執行 Python 程式 `serial_to_keys.py` 當橋樑：
+  - Arduino → 電腦：搖桿／按鈕的「按下／放開」訊息，轉成鍵盤按鍵。
+  - 遊戲 → 電腦 → Arduino：車速和檢查點，控制風扇和紅燈。
+- 使用的元件：搖桿模組 ×1、按鈕 ×1、5V 小風扇 ×1、NPN 電晶體 ×1、二極體 1N4007 ×1、紅色 LED ×1、電阻 1kΩ／220Ω 各 1、麵包板、杜邦線。
+- 接線方式與使用說明：見 [`arduino/README.md`](arduino/README.md)。
+- 程式：[`arduino/racing_serial_uno/`](arduino/racing_serial_uno/)
 
 ## 4. 建立四人共用的 GitHub
 
@@ -49,6 +52,7 @@
   1. `git init -b main`，建立本機 git repo。
   2. `git remote add origin https://github.com/okeik/arduino_gwcl-.git`，連接 GitHub。
   3. 把賽車遊戲程式碼複製到 `car-racing-1/`，commit 後 `git push` 上傳。
+- 開啟 GitHub Pages（從 `main` 分支發布），遊戲網址為 <https://okeik.github.io/arduino_gwcl-/car-racing-1/>。
 - 之後的工作流程：開始前先 `git pull` 抓最新版本 → 修改 → `git commit` → `git push`。
 
 ---
@@ -59,9 +63,8 @@
 arduino_gwcl-/
 ├── arduino/
 │   ├── README.md                 # 接線與使用說明
-│   ├── racing_serial_uno/        # Uno 版程式 + serial_to_keys.py
-│   └── racing_keyboard/          # Leonardo 版程式
+│   └── racing_serial_uno/        # Uno 程式 + serial_to_keys.py
 ├── car-racing-1/
-│   └── index.html      # 賽車遊戲（RALLY / RAW 2）
-└── 物理課exp1.md        # 本紀錄
+│   └── index.html                # 賽車遊戲（RALLY / RAW 2）
+└── 物理課exp1.md                  # 本紀錄
 ```
