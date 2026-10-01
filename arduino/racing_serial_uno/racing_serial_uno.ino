@@ -179,6 +179,9 @@ void setup() {
   }
   centerX = sumX / 16;
   centerY = sumY / 16;
+
+  // 告訴電腦 Arduino 剛啟動（或重新啟動），電腦會放開所有按住的鍵
+  Serial.println("#ready");
 }
 
 void loop() {

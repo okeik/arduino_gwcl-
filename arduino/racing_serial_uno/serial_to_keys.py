@@ -150,6 +150,13 @@ def main():
         try:
             while True:
                 line = ser.readline().decode(errors="ignore").strip()
+                if line == "#ready":
+                    # Arduino 重新啟動後不記得哪些鍵按著，先全部放開，避免卡鍵
+                    for key in held:
+                        send_key(SCAN_CODES[key], False)
+                    held.clear()
+                    print("Arduino 已啟動（如果一直重複出現，代表電源不足或短路，請檢查風扇接線）")
+                    continue
                 if len(line) < 2 or line[0] not in "+-":
                     continue
                 key = line[1:]
